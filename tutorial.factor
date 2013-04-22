@@ -48,6 +48,6 @@ TUPLE: person { name initial: "dummy" } ;
 ! extraneous spaces are trimmed from the resulting value. Try it with
 !    "from:  sender   name  <some.email@domain.com" parse-header .
 : parse-header ( header -- value )
-    " " split [ empty? not ] filter rest " " join ;
+    " " split harvest rest " " join ;
 
 

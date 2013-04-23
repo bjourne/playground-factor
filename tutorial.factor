@@ -5,10 +5,13 @@
 USING:
     accessors
     arrays
+    ascii
     combinators
     combinators.short-circuit
     kernel
     math
+    math.ranges
+    random
     sequences
     splitting
     strings
@@ -43,11 +46,23 @@ TUPLE: person { name initial: "dummy" } ;
     person new name>> ;
 
 ! sequences: rest
-! -----------------
+! ---------------
 ! Here is a way to parse a mail header. To make it more interesting
 ! extraneous spaces are trimmed from the resulting value. Try it with
 !    "from:  sender   name  <some.email@domain.com" parse-header .
 : parse-header ( header -- value )
     " " split harvest rest " " join ;
+
+! sequences: replicate
+! --------------------
+! How to use replicate to generate a random "believable name" composed
+! of a first and lastname.
+: ascii-letters ( -- seq )
+    CHAR: a CHAR: z [a,b] ;
+
+: generate-ascii-name ( -- str )
+    2 [ 8 [1,b] random [ ascii-letters random ] replicate ] replicate
+    " " join >title ;
+    
 
 

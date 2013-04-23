@@ -6,8 +6,10 @@ USING:
     accessors
     arrays
     ascii
+    assocs
     combinators
     combinators.short-circuit
+    formatting
     kernel
     math
     math.ranges
@@ -15,6 +17,7 @@ USING:
     sequences
     splitting
     strings
+    xml.entities
     ;
 IN: tutorial
 
@@ -63,6 +66,14 @@ TUPLE: person { name initial: "dummy" } ;
 : generate-ascii-name ( -- str )
     2 [ 8 [1,b] random [ ascii-letters random ] replicate ] replicate
     " " join >title ;
+
+! sequences: reduce
+! -----------------
+! Executes multiple string substitutions in one go.
+: multi-replace ( repls str -- str )
+    [ first2 replace ] reduce ;
+
+
     
 
 

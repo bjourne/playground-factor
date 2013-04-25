@@ -11,7 +11,7 @@ USING:
     sequences
     strings
     ;
-IN: gmane-utils
+IN: gmane.utils
 
 ! For printing of stuff
 ! !!!!!!!!!!!!!!!!!!!!!

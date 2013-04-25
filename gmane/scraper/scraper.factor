@@ -6,7 +6,7 @@ USING:
     combinators
     continuations
     formatting
-    gmane-db
+    gmane.db
     kernel
     html.parser html.parser.analyzer
     http.client
@@ -18,7 +18,7 @@ USING:
     unicode.case unicode.categories
     xml.entities
     ;
-IN: gmane-scraper
+IN: gmane.scraper
 
 ! Generates urls to gmane
 ! -----------------------

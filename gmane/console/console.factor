@@ -3,14 +3,14 @@ USING:
     db db.sqlite db.tuples db.types
     formatting
     fry
-    gmane-db gmane-scraper gmane-utils
+    gmane.db gmane.scraper gmane.utils
     io
     kernel
     prettyprint
     sequences
     strings
     ;
-IN: gmane-console
+IN: gmane.console
 
 : show-tuples ( quot -- )
     with-mydb table-format simple-tuple-table ; inline

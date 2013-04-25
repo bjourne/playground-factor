@@ -11,7 +11,7 @@ USING:
     sequences
     strings 
     ;
-IN: gmane-db
+IN: gmane.db
 
 TUPLE: mail id mid group date sender subject body ;
 

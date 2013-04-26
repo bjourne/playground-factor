@@ -56,10 +56,13 @@ IN: gmane.scraper
     [ dup name>> "br" = [ text >>name "\n" >>text ] when ] map
     ! Make a big string.
     [ text>> ] map concat
-    ! Fix entities and extraenous whitespace
+    ! Fix entities &lt; is replaced with < and so on.
     replace-entities
-    ! TODO: Figure out a better way to write this
-    20 [1,b] swap [ drop "\n\n\n" "\n\n" replace ] reduce
+    ! Replace consecutive repetitions of \n so that there is at most
+    ! two after each other. This is done because html formatted mails
+    ! contains redundant new lines that does not look good when
+    ! rendered as plain text.
+    R/ \n\n+/ "\n\n" re-replace
     [ blank? ] trim ;
 
 ! Specialized parsing functions

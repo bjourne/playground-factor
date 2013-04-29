@@ -5,10 +5,16 @@
 USING:
     accessors
     arrays
+    assocs
+    calendar
     combinators
     combinators.short-circuit
+    fry
     kernel
     math
+    mirrors
+    prettyprint
+    random
     sequences
     splitting
     strings
@@ -50,4 +56,46 @@ TUPLE: person { name initial: "dummy" } ;
 : parse-header ( header -- value )
     " " split harvest rest " " join ;
 
+! kernel: when
+! ------------
+! A slightly silly way of implementing the abs function.
+: when-abs ( x -- x )
+    dup 0 < [ -1 * ] when ;
 
+! mirrors:<mirror>
+! ----------------
+! Gets an ordered list of slot values from the tuple whose names match
+! those in the input sequence. This function can be pretty useful in
+! cases when you want to iterate over all attributes of some tuple.
+: slot-values ( slots tuple -- values )
+    <mirror> >alist extract-keys values ;
+
+! prettyprint: simple-table.
+! --------------------------
+! Demonstrates how to use slot-values to output a table of
+! tuples. Called like this:
+!
+!     tuples { "attr1" "attr2" ... } simple-tuple-table
+!
+! and the result is a pretty table with headers being printed.
+: simple-tuple-table ( tuples slots -- )
+    [ '[ _ swap slot-values ] map ] keep prefix simple-table. ;
+
+! calendar: time+
+! ---------------
+! Generate a random timestamp 500 days wihin current date. This
+! function could be improved so that the timestamps aren't always
+! full days apart.
+: random-timestamp ( -- timestamp )
+    now 1000 random 500 - days time+ ;
+
+! sequences: pad-tail
+! -------------------
+! If you have an alist and want to output the key values nicely,
+! pad-tail and longest comes in handy:
+: pad-strings ( strings -- strings )
+    dup longest '[ _ CHAR: \\s  pad-tail ] map ;
+
+: print-alist ( alist -- )
+    [ keys pad-strings ] [ values ] bi zip
+    [ " : " join ] map "\n" join print ;

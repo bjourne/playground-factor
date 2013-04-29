@@ -7,17 +7,19 @@ USING:
     arrays
     assocs
     calendar
-    combinators
-    combinators.short-circuit
+    combinators combinators.short-circuit
+    formatting
     fry
     kernel
-    math
+    math math.ranges
     mirrors
     prettyprint
     random
     sequences
     splitting
     strings
+    unicode.case
+    xml.entities
     ;
 IN: tutorial
 
@@ -49,7 +51,7 @@ TUPLE: person { name initial: "dummy" } ;
     person new name>> ;
 
 ! sequences: rest
-! -----------------
+! ---------------
 ! Here is a way to parse a mail header. To make it more interesting
 ! extraneous spaces are trimmed from the resulting value. Try it with
 !    "from:  sender   name  <some.email@domain.com" parse-header .
@@ -61,6 +63,23 @@ TUPLE: person { name initial: "dummy" } ;
 ! A slightly silly way of implementing the abs function.
 : when-abs ( x -- x )
     dup 0 < [ -1 * ] when ;
+
+! sequences: replicate
+! --------------------
+! How to use replicate to generate a random "believable name" composed
+! of a first and lastname.
+: ascii-letters ( -- seq )
+    CHAR: a CHAR: z [a,b] ;
+
+: generate-ascii-name ( -- str )
+    2 [ 8 [1,b] random [ ascii-letters random ] replicate ] replicate
+    " " join >title ;
+
+! sequences: reduce
+! -----------------
+! Executes multiple string substitutions in one go.
+! : multi-replace ( repls str -- str )
+!     [ first2 replace ] reduce ;
 
 ! mirrors:<mirror>
 ! ----------------
@@ -93,9 +112,9 @@ TUPLE: person { name initial: "dummy" } ;
 ! -------------------
 ! If you have an alist and want to output the key values nicely,
 ! pad-tail and longest comes in handy:
-: pad-strings ( strings -- strings )
-    dup longest '[ _ CHAR: \\s  pad-tail ] map ;
+! : pad-strings ( strings -- strings )
+!     dup longest '[ _ CHAR: \\s  pad-tail ] map ;
 
-: print-alist ( alist -- )
-    [ keys pad-strings ] [ values ] bi zip
-    [ " : " join ] map "\n" join print ;
+! : print-alist ( alist -- )
+!     [ keys pad-strings ] [ values ] bi zip
+!     [ " : " join ] map "\n" join print ;

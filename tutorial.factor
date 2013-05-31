@@ -10,8 +10,10 @@ USING:
     combinators combinators.short-circuit
     formatting
     fry
+    generalizations
+    io
     kernel
-    math math.ranges
+    math math.order math.ranges
     mirrors
     prettyprint
     random
@@ -78,8 +80,8 @@ TUPLE: person { name initial: "dummy" } ;
 ! sequences: reduce
 ! -----------------
 ! Executes multiple string substitutions in one go.
-! : multi-replace ( repls str -- str )
-!     [ first2 replace ] reduce ;
+: multi-replace ( repls str -- str )
+    [ first2 replace ] reduce ;
 
 ! mirrors:<mirror>
 ! ----------------
@@ -112,9 +114,23 @@ TUPLE: person { name initial: "dummy" } ;
 ! -------------------
 ! If you have an alist and want to output the key values nicely,
 ! pad-tail and longest comes in handy:
-! : pad-strings ( strings -- strings )
-!     dup longest '[ _ CHAR: \\s  pad-tail ] map ;
+: pad-strings ( strings -- strings )
+    dup longest '[ _ CHAR: \s  pad-tail ] map ;
 
-! : print-alist ( alist -- )
-!     [ keys pad-strings ] [ values ] bi zip
-!     [ " : " join ] map "\n" join print ;
+: print-alist ( alist -- )
+    [ keys pad-strings ] [ values ] bi zip
+    [ " : " join ] map "\n" join print ;
+
+: idx-rel>abs ( len idx -- idx' )
+    dupd min dup 0 < [ + ] [ nip ] if 0 max ;
+
+: idx-rel>abs2 ( idx len -- idx' )
+    swap dup 0 < [ dupd ] [ 0 ] if + min 0 max ;
+
+: idx-rel>abs3 ( idx len -- idx' )
+    swap dup 0 < [ dupd + ] when min 0 max ;
+
+: py-slice ( f t seq -- seq' )
+    -rot 2array over length '[ _ swap idx-rel>abs ] map first2 rot subseq ;
+
+: py-slice ( f t seq -- seq' ) -rot pick length '[ _ swap dup 0 < [ dupd + ] when min 0 max ] 2 napply rot subseq ;

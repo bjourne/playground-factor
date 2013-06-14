@@ -1,4 +1,5 @@
 USING:
+    accessors
     calendar
     db db.sqlite db.tuples db.types
     fry

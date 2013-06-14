@@ -3,13 +3,12 @@ USING:
     db db.sqlite db.tuples db.types
     formatting
     fry
-    gmane.db gmane.scraper gmane.utils
+    gmane.db gmane.formatting gmane.scraper
     io
     kernel
     prettyprint
     sequences
-    strings
-    ;
+    strings ;
 IN: gmane.console
 
 : show-tuples ( quot -- )
@@ -36,7 +35,7 @@ IN: gmane.console
     [
         dup header-format swap format-tuple
         swap body>>
-        suffix "\n" join 
+        suffix "\n" join
     ] [ "Error: No such mail" ] if* print ;
 
 : init ( -- )
@@ -61,6 +60,3 @@ IN: gmane.console
         ]
         if
     ] each ;
-    
-
-

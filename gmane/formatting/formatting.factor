@@ -10,6 +10,7 @@ USING:
     locals
     math.parser
     mirrors
+    prettyprint
     sequences
     strings ;
 IN: gmane.formatting

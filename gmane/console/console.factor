@@ -1,6 +1,7 @@
 USING:
     accessors
     arrays
+    calendar.format
     db.tuples
     formatting
     fry
@@ -42,7 +43,7 @@ SYMBOL: group
     pagesize get [ 25 pagesize set get-pagesize ] unless* ;
 
 : set-pagesize ( n -- )
-    dup 1 100 between?
+    dup 1 1000 between?
     [ dup pagesize set "Page size set to %d." sprintf ]
     [ "%d not in range 1-100." sprintf ]
     if print ;
@@ -61,3 +62,19 @@ SYMBOL: group
         <query> T{ mail } get-group >>group >>tuple
         "date desc" >>order get-pagesize >>limit select-tuples
     ] with-mydb mail-format print-table ;
+
+: read ( id -- )
+    '[ T{ mail } _ >>id select-tuple ] with-mydb
+     [
+        dup
+        { { "ID" [ id>> ] }
+          { "Group" [ group>> ] }
+          { "Mid" [ mid>> ] }
+          { "Date" [ date>> timestamp>ymdhms ] }
+          { "Sender" [ sender>> ] }
+          { "Subject" [ subject>> ] }
+        } object-table.
+        body>>
+    ]
+    [ "No such mail :-(" ]
+    if* print ;

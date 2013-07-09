@@ -29,7 +29,7 @@ mail "mail" {
     CHAR: a CHAR: z [a,b] ;
 
 : random-ascii ( n -- str )
-    [ ascii-lower random ] replicate >string ;
+    [ ascii-lower random ] "" replicate-as ;
 
 : random-mail ( -- mail )
     f

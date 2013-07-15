@@ -8,10 +8,10 @@ USING:
     gmane.db
     io
     kernel
+    math.parser
     mirrors
-    memoize
     sequences
-    sets.private
+    sets
     splitting
     unicode.case unicode.categories ;
 IN: gmane.fts
@@ -43,7 +43,7 @@ indexed-mail "indexed_mail" {
   indexed-mail boa ;
 
 : db-init ( -- )
-  [ { word word-to-mail indexed-mail } [ recreate-table ] each ] with-mydb ;
+  [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : db-insert ( tup -- id )
   insert-tuple last-insert-id ;
@@ -61,12 +61,12 @@ indexed-mail "indexed_mail" {
   <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
 
 : string>tokens ( str -- seq )
-  >lower [ letter? not ] split-when [ empty? not ] filter pruned ;
+  >lower [ letter? not ] split-when [ empty? not ] filter members ;
 
 : get-mail-tokens ( id -- seq )
   mail db-row-by-id get-search-string string>tokens ;
 
-MEMO: str>word-id ( str -- word-id )
+: str>word-id ( str -- word-id )
   <word> db-ensure ;
 
 : get-mail-words ( id -- words )
@@ -76,16 +76,18 @@ MEMO: str>word-id ( str -- word-id )
   dup get-mail-words swap '[ _ word-to-mail boa dup db-ensure* ] map ;
 
 : ensure-mail-indexed ( id -- seq )
-  <indexed-mail> dup select-tuple
-  [ drop { }  ]
-  [
-    [ db-ensure* ]
-    [ mail-id>> index-mail ] bi
-  ] if ;
+  [ index-mail ] [ <indexed-mail> db-ensure* ] bi ;
 
-: update-index ( -- )
+: missing-mails ( -- seq )
+  {
+    "select m.id"
+    "from mail m left join indexed_mail im on im.mail_id = m.id"
+    "where im.mail_id is null"
+  } " " join sql-query [ first string>number ] map ;
+
+: update ( -- )
   [
-    T{ mail } select-tuples
+    missing-mails
     [
       [ subject>> "Indexing mail '%s' ... " printf flush ]
       [ id>> ensure-mail-indexed length " %s new words\n" printf flush ] bi

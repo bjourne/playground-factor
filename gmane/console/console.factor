@@ -17,7 +17,7 @@ USING:
 IN: gmane.console
 
 : init ( -- )
-    [ mail recreate-table ] with-mydb
+    [ mail ensure-table ] with-mydb
     "Database created." print ;
 
 :: next-mids ( n group -- seq )

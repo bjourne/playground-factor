@@ -17,7 +17,7 @@ USING:
 IN: gmane.console
 
 : init ( -- )
-    [ mail recreate-table ] with-mydb
+    [ mail ensure-table ] with-mydb
     "Database created." print ;
 
 :: next-mids ( n group -- seq )
@@ -63,7 +63,7 @@ SYMBOL: group
         "date desc" >>order get-pagesize >>limit select-tuples
     ] with-mydb mail-format print-table ;
 
-: read ( id -- )
+: read-mail ( id -- )
     '[ T{ mail } _ >>id select-tuple ] with-mydb
      [
         dup

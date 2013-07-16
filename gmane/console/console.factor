@@ -23,9 +23,6 @@ IN: gmane.console
 :: next-mids ( n group -- seq )
     n 1 lfrom [ group mail-exists? not ] lfilter ltake list>array ;
 
-: print-row ( seq -- )
-    1array simple-table. flush ;
-
 : import-one ( mid group -- )
     2dup parse-mail
     [ dup insert-mail >>id mail-format swap table-row print-row 2drop ]

@@ -59,3 +59,6 @@ IN: gmane.formatting
 
 : print-table ( seq format -- )
     [ '[ _ swap table-row ] map ] [ table-header ] bi prefix simple-table. ;
+
+: print-row ( seq -- )
+    1array simple-table. flush ;

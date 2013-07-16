@@ -1,12 +1,11 @@
 USING:
     accessors
     assocs
-    combinators
     db db.queries db.sqlite db.tuples db.tuples.private db.types
     destructors
     formatting
     fry
-    gmane.db
+    gmane.db gmane.formatting
     io
     kernel
     math.parser
@@ -14,6 +13,7 @@ USING:
     sequences
     sets
     splitting
+    strings
     unicode.case unicode.categories ;
 IN: gmane.fts
 
@@ -37,66 +37,55 @@ indexed-mail "indexed_mail" {
   { "mail-id" "mail_id" INTEGER }
 } define-persistent
 
-: <word> ( str -- word )
-  f swap word boa ;
+TUPLE: index-result id subject word-count elapsed-time ;
 
-: <indexed-mail> ( id -- indexed-mail )
-  indexed-mail boa ;
+: index-result-format ( -- seq )
+    {
+        { "id" t 5 number>string }
+        { "subject" f 50 >string }
+        { "word-count" t 10 number>string }
+        { "elapsed-time" t 20 number>string }
+    } ;
+
+: <word> ( str -- word )
+    f swap word boa ;
 
 : db-init ( -- )
-  [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
-
-: db-insert ( tup -- id )
-  insert-tuple last-insert-id ;
-
-: db-ensure ( tup -- id )
-  dup select-tuple [ id>> nip ] [ db-insert ] if* ;
-
-: db-ensure* ( tup -- )
-  dup select-tuple [ db-insert ] unless drop ;
-
-: db-row-by-id ( id tup-type -- row )
-  new swap >>id select-tuple ;
+    [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
-  <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
+    <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
 
 : string>tokens ( str -- seq )
-  >lower [ letter? not ] split-when [ empty? not ] filter members ;
+    >lower [ letter? not ] split-when harvest members ;
 
-: get-mail-tokens ( id -- seq )
-  mail db-row-by-id get-search-string string>tokens ;
+: ensure-words ( seq -- word-ids )
+    dup T{ word } swap >>str select-tuples
+    [ [ str>> ] map diff [ <word> insert-tuple last-insert-id ] map ] keep
+    [ id>> ] map append ;
 
-: str>word-id ( str -- word-id )
-  <word> db-ensure ;
+: index-mail ( mail -- index-result )
+    [ id>> dup indexed-mail boa insert-tuple ]
+    [ subject>> ]
+    [
+        [ get-search-string string>tokens ensure-words dup ] keep
+        id>> '[ _ word-to-mail boa insert-tuple ] each length 66
+    ] tri index-result boa ;
 
-: get-mail-words ( id -- words )
-  get-mail-tokens [ str>word-id ] map ;
-
-: index-mail ( id -- seq )
-  dup get-mail-words swap '[ _ word-to-mail boa dup db-ensure* ] map ;
-
-: ensure-mail-indexed ( id -- seq )
-  [ index-mail ] [ <indexed-mail> db-ensure* ] bi ;
-
-: sql-query-for-class ( sql class -- seq )
-  dup new -rot sql-props swap <simple-statement>
-  [ query-tuples ] with-disposal ;
+: raw-select-tuples ( sql class -- seq )
+    dup new -rot sql-props swap <simple-statement>
+    [ query-tuples ] with-disposal ;
 
 : missing-mails ( -- seq )
-  {
-    "select m.*"
-    "from mail m left join indexed_mail im on im.mail_id = m.id"
-    "where im.mail_id is null"
-  } " " join mail sql-query-for-class ;
-
-!  sql-query [ first string>number ] map ;
+    {
+        "select m.*"
+        "from mail m left join indexed_mail im on im.mail_id = m.id"
+        "where im.mail_id is null"
+    } " " join mail raw-select-tuples ;
 
 : update ( -- )
-  [
-    missing-mails
+    index-result-format table-header print-row
     [
-      [ subject>> "Indexing mail '%s' ... " printf flush ]
-      [ id>> ensure-mail-indexed length " %s new words\n" printf flush ] bi
-    ] each
-  ] with-mydb ;
+        missing-mails
+        [ index-mail index-result-format swap table-row print-row ] each
+    ] with-mydb ;

@@ -2,7 +2,8 @@ USING:
     accessors
     assocs
     combinators
-    db db.sqlite db.tuples db.types
+    db db.queries db.sqlite db.tuples db.tuples.private db.types
+    destructors
     formatting
     fry
     gmane.db
@@ -78,12 +79,18 @@ indexed-mail "indexed_mail" {
 : ensure-mail-indexed ( id -- seq )
   [ index-mail ] [ <indexed-mail> db-ensure* ] bi ;
 
+: sql-query-for-class ( sql class -- seq )
+  dup new -rot sql-props swap <simple-statement>
+  [ query-tuples ] with-disposal ;
+
 : missing-mails ( -- seq )
   {
-    "select m.id"
+    "select m.*"
     "from mail m left join indexed_mail im on im.mail_id = m.id"
     "where im.mail_id is null"
-  } " " join sql-query [ first string>number ] map ;
+  } " " join mail sql-query-for-class ;
+
+!  sql-query [ first string>number ] map ;
 
 : update ( -- )
   [

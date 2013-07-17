@@ -59,10 +59,14 @@ TUPLE: index-result id subject word-count elapsed-time ;
 : string>tokens ( str -- seq )
     >lower [ letter? not ] split-when harvest members ;
 
+: select-words ( seq -- word-ids )
+    <word> select-tuples ;
+
+: insert-missing-words ( seq -- )
+    dup select-words [ str>> ] map diff [ <word> insert-tuple ] each ;
+
 : ensure-words ( seq -- word-ids )
-    dup T{ word } swap >>str select-tuples
-    [ [ str>> ] map diff [ <word> insert-tuple last-insert-id ] map ] keep
-    [ id>> ] map append ;
+    dup insert-missing-words select-words [ id>> ] map ;
 
 : index-mail ( mail -- index-result )
     [ id>> dup indexed-mail boa insert-tuple ]

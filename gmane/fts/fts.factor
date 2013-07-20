@@ -1,5 +1,6 @@
 USING:
     accessors
+    arrays
     assocs
     db db.queries db.sqlite db.tuples db.tuples.private db.types
     destructors
@@ -89,14 +90,24 @@ TUPLE: index-result id subject word-count elapsed-time ;
     "where im.mail_id is null"
   } " " join mail raw-select-tuples ;
 
-: insert-tuples ( seq -- )
-  drop ;
-
 : update ( -- )
-  index-result-format table-header print-row
   [
-    missing-mails [
-      [ index-mail ] with-transaction
-      index-result-format swap table-row print-row
-    ] each
+    missing-mails [ [ index-mail ] with-transaction ] index-result-format
+    print-generator-table
   ] with-mydb ;
+
+: interpolate-string ( params format -- str )
+  [ number>string "$" prepend swap replace ] reduce-index ;
+
+: join-format ( -- format )
+  "word_to_mail wtm$1 on wtm$1.mail_id = m.id"
+  "word w$1 on wtm$1.word_id = w$1.id and w$1.str = '$0'"
+  " join " glue ;
+
+: tokens>search-query ( tokens -- str )
+  [ number>string 2array join-format interpolate-string ] map-index
+  "mail m" prefix " join " join "select m.* from %s" sprintf ;
+
+: search ( string -- )
+  string>tokens tokens>search-query mail [ raw-select-tuples ] with-mydb
+  mail-format print-table ;

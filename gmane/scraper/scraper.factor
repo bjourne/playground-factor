@@ -49,7 +49,7 @@ IN: gmane.scraper
 : parse-mail-header ( html header -- text )
     [ tag-vector>string ] dip
     ": " append dup "[^\n]+" append <regexp> swapd first-match
-    swap "" replace ;
+    swap "" replace "\t" "" replace ;
 
 : parse-mail ( n str -- mail/f )
     2dup mail-url scrape-html nip dup length 1 =

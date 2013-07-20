@@ -23,15 +23,12 @@ IN: gmane.console
 :: next-mids ( n group -- seq )
     n 1 lfrom [ group mail-exists? not ] lfilter ltake list>array ;
 
-: import-one ( mid group -- )
-    2dup parse-mail
-    [ dup insert-mail >>id mail-format swap table-row print-row 2drop ]
-    [ "Mail %d:%s does not exist!\n" printf flush ]
-    if* ;
+: import-one ( mid group -- row/err )
+  [ "Mail %d:%s does not exist!" sprintf ] 2keep
+  parse-mail [ dup insert-mail >>id nip ] when* ;
 
 : import-many ( n group -- )
-    mail-format table-header print-row
-    [ next-mids reverse ] keep '[ _ import-one ] each ;
+  [ next-mids reverse ] keep '[ _ import-one ] mail-format generate-table ;
 
 SYMBOL: pagesize
 SYMBOL: group

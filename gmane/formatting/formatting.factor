@@ -62,3 +62,9 @@ IN: gmane.formatting
 
 : print-row ( seq -- )
     1array simple-table. flush ;
+
+: generate-table ( seq quot format -- )
+  dup table-header print-row
+  '[
+    @ _ swap dup string? [ print flush drop ] [ table-row print-row ] if
+  ] each ; inline

@@ -6,10 +6,10 @@ USING:
     destructors
     formatting
     fry
-    gmane.db gmane.formatting
+    gmane.db
     io
     kernel
-    math math.parser
+    math.parser
     mirrors
     sequences
     sets
@@ -41,21 +41,10 @@ indexed-mail "indexed_mail" {
 
 TUPLE: index-result id subject word-count elapsed-time ;
 
-: nanoseconds>string ( n -- str )
-  1000000000 /f "%.2f" sprintf ;
-
-: index-result-format ( -- seq )
-  {
-    { "id" t 5 number>string }
-    { "subject" f 50 >string }
-    { "word-count" t 10 number>string }
-    { "elapsed-time" t 20 nanoseconds>string }
-  } ;
-
 : <word> ( str -- word )
   f swap word boa ;
 
-: db-init ( -- )
+: init ( -- )
   [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
@@ -90,14 +79,9 @@ TUPLE: index-result id subject word-count elapsed-time ;
     "where im.mail_id is null"
   } " " join mail raw-select-tuples ;
 
-: update ( -- )
-  [
-    missing-mails [ [ index-mail ] with-transaction ] index-result-format
-    print-generator-table
-  ] with-mydb ;
-
+! My own string interpolation syntax. Does something usable exist in stdlib?
 : interpolate-string ( params format -- str )
-  [ number>string "$" prepend swap replace ] reduce-index ;
+  [ "$%d" sprintf swap replace ] reduce-index ;
 
 : join-format ( -- format )
   "word_to_mail wtm$1 on wtm$1.mail_id = m.id"
@@ -107,7 +91,3 @@ TUPLE: index-result id subject word-count elapsed-time ;
 : tokens>search-query ( tokens -- str )
   [ number>string 2array join-format interpolate-string ] map-index
   "mail m" prefix " join " join "select m.* from %s" sprintf ;
-
-: search ( string -- )
-  string>tokens tokens>search-query mail [ raw-select-tuples ] with-mydb
-  mail-format print-table ;

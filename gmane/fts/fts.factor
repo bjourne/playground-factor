@@ -8,12 +8,13 @@ USING:
     gmane.db gmane.formatting
     io
     kernel
-    math.parser
+    math math.parser
     mirrors
     sequences
     sets
     splitting
     strings
+    tools.time
     unicode.case unicode.categories ;
 IN: gmane.fts
 
@@ -39,12 +40,15 @@ indexed-mail "indexed_mail" {
 
 TUPLE: index-result id subject word-count elapsed-time ;
 
+: nanoseconds>string ( n -- str )
+  1000000000 /f "%.2f" sprintf ;
+
 : index-result-format ( -- seq )
     {
         { "id" t 5 number>string }
         { "subject" f 50 >string }
         { "word-count" t 10 number>string }
-        { "elapsed-time" t 20 number>string }
+        { "elapsed-time" t 20 nanoseconds>string }
     } ;
 
 : <word> ( str -- word )
@@ -65,12 +69,14 @@ TUPLE: index-result id subject word-count elapsed-time ;
     [ id>> ] map append ;
 
 : index-mail ( mail -- index-result )
+  [
     [ id>> dup indexed-mail boa insert-tuple ]
     [ subject>> ]
     [
-        [ get-search-string string>tokens ensure-words dup ] keep
-        id>> '[ _ word-to-mail boa insert-tuple ] each length 66
-    ] tri index-result boa ;
+      [ get-search-string string>tokens ensure-words dup ] keep
+      id>> '[ _ word-to-mail boa insert-tuple ] each length
+    ] tri
+  ] benchmark index-result boa ;
 
 : raw-select-tuples ( sql class -- seq )
     dup new -rot sql-props swap <simple-statement>
@@ -84,8 +90,8 @@ TUPLE: index-result id subject word-count elapsed-time ;
     } " " join mail raw-select-tuples ;
 
 : update ( -- )
-    index-result-format table-header print-row
-    [
-        missing-mails
-        [ index-mail index-result-format swap table-row print-row ] each
-    ] with-mydb ;
+  index-result-format table-header print-row
+  [
+    missing-mails
+    [ index-mail index-result-format swap table-row print-row ] each
+  ] with-mydb ;

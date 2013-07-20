@@ -39,10 +39,10 @@ IN: gmane.formatting
     {
         { "id" t 6 db-assigned-id>string }
         { "mid" t 5 number>string }
-        { "group" f 15 >string }
+        { "group" f 12 >string }
         { "date" f 10 timestamp>ymd }
         { "sender" f 15 >string }
-        { "subject" f 50 >string }
+        { "subject" f 45 >string }
     } ;
 
 : table-header ( format -- header-cells )

@@ -44,54 +44,59 @@ TUPLE: index-result id subject word-count elapsed-time ;
   1000000000 /f "%.2f" sprintf ;
 
 : index-result-format ( -- seq )
-    {
-        { "id" t 5 number>string }
-        { "subject" f 50 >string }
-        { "word-count" t 10 number>string }
-        { "elapsed-time" t 20 nanoseconds>string }
-    } ;
+  {
+    { "id" t 5 number>string }
+    { "subject" f 50 >string }
+    { "word-count" t 10 number>string }
+    { "elapsed-time" t 20 nanoseconds>string }
+  } ;
 
 : <word> ( str -- word )
-    f swap word boa ;
+  f swap word boa ;
 
 : db-init ( -- )
-    [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
+  [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
-    <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
+  <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
 
 : string>tokens ( str -- seq )
-    >lower [ letter? not ] split-when harvest members ;
+  >lower [ letter? not ] split-when harvest members ;
 
 : ensure-words ( seq -- word-ids )
-    dup T{ word } swap >>str select-tuples
-    [ [ str>> ] map diff [ <word> insert-tuple last-insert-id ] map ] keep
-    [ id>> ] map append ;
+  dup T{ word } swap >>str select-tuples
+  [ [ str>> ] map diff [ <word> insert-tuple last-insert-id ] map ] keep
+  [ id>> ] map append ;
 
 : index-mail ( mail -- index-result )
   [
     [ id>> dup indexed-mail boa insert-tuple ]
     [ subject>> ]
     [
-      [ get-search-string string>tokens ensure-words dup ] keep
-      id>> '[ _ word-to-mail boa insert-tuple ] each length
+      [ get-search-string string>tokens ensure-words ] keep
+      id>> '[ _ word-to-mail boa insert-tuple t ] count
     ] tri
   ] benchmark index-result boa ;
 
 : raw-select-tuples ( sql class -- seq )
-    dup new -rot sql-props swap <simple-statement>
-    [ query-tuples ] with-disposal ;
+  dup new -rot sql-props swap <simple-statement>
+  [ query-tuples ] with-disposal ;
 
 : missing-mails ( -- seq )
-    {
-        "select m.*"
-        "from mail m left join indexed_mail im on im.mail_id = m.id"
-        "where im.mail_id is null"
-    } " " join mail raw-select-tuples ;
+  {
+    "select m.*"
+    "from mail m left join indexed_mail im on im.mail_id = m.id"
+    "where im.mail_id is null"
+  } " " join mail raw-select-tuples ;
+
+: insert-tuples ( seq -- )
+  drop ;
 
 : update ( -- )
   index-result-format table-header print-row
   [
-    missing-mails
-    [ index-mail index-result-format swap table-row print-row ] each
+    missing-mails [
+      [ index-mail ] with-transaction
+      index-result-format swap table-row print-row
+    ] each
   ] with-mydb ;

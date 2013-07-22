@@ -23,10 +23,20 @@ IN: gmane.scraper
     '[ _ string>xml-chunk ] with-html-entities first ;
 
 : tag-vector>string ( vector -- string )
+    ! Special quoting used in html mails. TODO: different parser for
+    ! html and plain text.
+    dup [ name>> "blockquote" = ] find-between-all swap
+    [
+      dup
+      [
+        [ dup empty? not [ " " prepend ] when ] change-text
+      ] map replace
+    ] reduce
     ! Translate br tags to newlines.
     [ dup name>> "br" = [ text >>name "\n" >>text ] when ] map
     ! Filter away comments and non-text nodes
     [ [ text>> ] [ name>> comment = not ] bi and ] filter
+
     [ text>> ] map concat
     ! Fix entities &lt; is replaced with < and so on.
     replace-entities
@@ -49,7 +59,7 @@ IN: gmane.scraper
 : parse-mail-header ( html header -- text )
     [ tag-vector>string ] dip
     ": " append dup "[^\n]+" append <regexp> swapd first-match
-    swap "" replace ;
+    swap "" replace "\t" "" replace ;
 
 : parse-mail ( n str -- mail/f )
     2dup mail-url scrape-html nip dup length 1 =

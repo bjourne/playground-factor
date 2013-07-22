@@ -1,11 +1,12 @@
 USING:
     accessors
+    arrays
     assocs
     db db.queries db.sqlite db.tuples db.tuples.private db.types
     destructors
     formatting
     fry
-    gmane.db gmane.formatting
+    gmane.db
     io
     kernel
     math.parser
@@ -14,6 +15,7 @@ USING:
     sets
     splitting
     strings
+    tools.time
     unicode.case unicode.categories ;
 IN: gmane.fts
 
@@ -39,25 +41,17 @@ indexed-mail "indexed_mail" {
 
 TUPLE: index-result id subject word-count elapsed-time ;
 
-: index-result-format ( -- seq )
-    {
-        { "id" t 5 number>string }
-        { "subject" f 50 >string }
-        { "word-count" t 10 number>string }
-        { "elapsed-time" t 20 number>string }
-    } ;
-
 : <word> ( str -- word )
-    f swap word boa ;
+  f swap word boa ;
 
-: db-init ( -- )
-    [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
+: init ( -- )
+  [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
-    <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
+  <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
 
 : string>tokens ( str -- seq )
-    >lower [ letter? not ] split-when harvest members ;
+  >lower [ letter? not ] split-when harvest members ;
 
 : select-words ( seq -- word-ids )
     <word> select-tuples ;
@@ -66,30 +60,38 @@ TUPLE: index-result id subject word-count elapsed-time ;
     dup select-words [ str>> ] map diff [ <word> insert-tuple ] each ;
 
 : ensure-words ( seq -- word-ids )
-    dup insert-missing-words select-words [ id>> ] map ;
+  dup insert-missing-words select-words [ id>> ] map ;
 
 : index-mail ( mail -- index-result )
+  [
     [ id>> dup indexed-mail boa insert-tuple ]
     [ subject>> ]
     [
-        [ get-search-string string>tokens ensure-words dup ] keep
-        id>> '[ _ word-to-mail boa insert-tuple ] each length 66
-    ] tri index-result boa ;
+      [ get-search-string string>tokens ensure-words ] keep
+      id>> '[ _ word-to-mail boa insert-tuple t ] count
+    ] tri
+  ] benchmark index-result boa ;
 
 : raw-select-tuples ( sql class -- seq )
-    dup new -rot sql-props swap <simple-statement>
-    [ query-tuples ] with-disposal ;
+  dup new -rot sql-props swap <simple-statement>
+  [ query-tuples ] with-disposal ;
 
 : missing-mails ( -- seq )
-    {
-        "select m.*"
-        "from mail m left join indexed_mail im on im.mail_id = m.id"
-        "where im.mail_id is null"
-    } " " join mail raw-select-tuples ;
+  {
+    "select m.*"
+    "from mail m left join indexed_mail im on im.mail_id = m.id"
+    "where im.mail_id is null"
+  } " " join mail raw-select-tuples ;
 
-: update ( -- )
-    index-result-format table-header print-row
-    [
-        missing-mails
-        [ index-mail index-result-format swap table-row print-row ] each
-    ] with-mydb ;
+! My own string interpolation syntax. Does something usable exist in stdlib?
+: interpolate-string ( params format -- str )
+  [ "$%d" sprintf swap replace ] reduce-index ;
+
+: join-format ( -- format )
+  "word_to_mail wtm$1 on wtm$1.mail_id = m.id"
+  "word w$1 on wtm$1.word_id = w$1.id and w$1.str = '$0'"
+  " join " glue ;
+
+: tokens>search-query ( tokens -- str )
+  [ number>string 2array join-format interpolate-string ] map-index
+  "mail m" prefix " join " join "select m.* from %s" sprintf ;

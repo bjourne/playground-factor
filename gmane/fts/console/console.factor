@@ -1,4 +1,9 @@
-USING: db gmane.db gmane.formatting gmane.fts ;
+USING:
+    db
+    formatting
+    gmane.db gmane.formatting gmane.fts
+    math math.parser
+    strings ;
 IN: gmane.fts.console
 
 : nanoseconds>string ( n -- str )

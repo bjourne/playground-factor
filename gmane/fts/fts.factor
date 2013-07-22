@@ -48,7 +48,7 @@ TUPLE: index-result id subject word-count elapsed-time ;
   [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
-  <mirror> '[ _ at ] { "body" "group" "sender" "subject" } swap map " " join ;
+    <mirror> { "body" "group" "sender" "subject" } [ of ] with map " " join ;
 
 : string>tokens ( str -- seq )
   >lower [ letter? not ] split-when harvest members ;
@@ -88,10 +88,10 @@ TUPLE: index-result id subject word-count elapsed-time ;
   [ "$%d" sprintf swap replace ] reduce-index ;
 
 : join-format ( -- format )
-  "word_to_mail wtm$1 on wtm$1.mail_id = m.id"
-  "word w$1 on wtm$1.word_id = w$1.id and w$1.str = '$0'"
-  " join " glue ;
+  "join word_to_mail wtm$1 on wtm$1.mail_id = m.id "
+  "join word w$1 on wtm$1.word_id = w$1.id and w$1.str = '$0'"
+  append ;
 
 : tokens>search-query ( tokens -- str )
   [ number>string 2array join-format interpolate-string ] map-index
-  "mail m" prefix " join " join "select m.* from %s" sprintf ;
+  " " join "select m.* from mail m %s" sprintf ;

@@ -49,13 +49,19 @@ IN: gmane.scraper
     R/ \n\n+/ "\n\n" re-replace
     [ blank? ] trim ;
 
-TUPLE: parser-state lines pre? indent ;
+! Well it's not very pretty but it manages to produce good-looking
+! text renderings of html mails... most of the time.
+TUPLE: parser-state lines pre? indent n-blanks ;
 
 : new-line ( state -- state' )
+    dup n-blanks>> 2 =
+    [ [ but-last ] change-lines ]
+    [ [ 1 + ] change-n-blanks ] if
     dup indent>> '[ _ "" 2array suffix ] change-lines ;
 
 : add-text ( state text -- state' )
-    '[ unclip-last first2 _ append 2array suffix ] change-lines ;
+    '[ unclip-last first2 _ append 2array suffix ] change-lines
+    0 >>n-blanks ;
 
 : add-lines ( state lines -- state' )
     dupd [ [ indent>> ] dip 2array ] with map '[ _ append ] change-lines ;
@@ -64,33 +70,47 @@ TUPLE: parser-state lines pre? indent ;
     dup [ name>> ] keep closing?>> 2array
     {
         { { "p" f } [ drop new-line ] }
+        { { "p" t } [ drop new-line ] }
+        { { "div" f } [ drop new-line ] }
         { { "br" f } [ drop new-line ] }
-        { { "span" f } [ drop new-line ] }
         ! Webkit css mandates two blank lines for blockquotes.
         { { "blockquote" f } [ drop [ 1 + ] change-indent new-line new-line ] }
         { { "blockquote" t } [ drop [ 1 - ] change-indent ] }
         {
             { text f }
             [
-                text>> replace-entities
+                text>>
+                replace-entities
                 swap dup pre?>>
-                [ swap string-lines harvest add-lines ]
-                [ swap "\n" "" replace add-text ]
-                if
+                [ swap add-text ]
+                ! [ swap [ CHAR: \n = ] trim string-lines add-lines ]
+                [ swap "\n" "" replace add-text ] if
             ]
         }
         ! Content in pre tags require special treatment because
         ! newlines are significant.
-        { { "pre" f } [ drop t >>pre? ] }
-        { { "pre" t } [ drop f >>pre? ] }
+        { { "pre" f } [ drop t >>pre? new-line ] }
+        {
+          { "pre" t }
+          [ drop f >>pre? ]
+        }
         [ 2drop ]
     } case ;
 
+: compress-br ( vector -- vector' )
+  "br" H{ } f f tag boa "div" H{ } f t tag boa 2array
+  "div" H{ } f t tag boa 1array replace
+  "br" H{ } f f tag boa "blockquote" H{ } f t tag boa 2array
+  "blockquote" H{ } f t tag boa 1array replace ;
+
 : tag-vector>logical-lines ( vector -- seq )
-    { } f 0 parser-state boa [ process-tag ] reduce lines>> ;
+    remove-blank-text compress-br
+    { } f 0 0 parser-state boa [ process-tag ] reduce lines>>
+    ! May be empty junk lines at head and tail
+    [ second empty? ] trim ;
 
 : logical-lines>string ( seq -- str )
-    [ first2 [ " > " swap repeat ] dip append ] map "\n" join ;
+    [ first2 [ [ " > " ] replicate concat ] dip append ] map "\n" join ;
 
 : remove-all ( seq subseqs -- seq )
     swap [ { } replace ] reduce ;

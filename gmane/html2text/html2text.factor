@@ -6,9 +6,9 @@ USING:
     kernel
     math
     sequences
+    sets
     splitting
-    xml xml.entities.html
-    ;
+    xml xml.entities.html ;
 IN: gmane.html2text
 
 TUPLE: state lines indent closing? ;
@@ -16,7 +16,7 @@ TUPLE: state lines indent closing? ;
 CONSTANT: max-empty-line-count 2
 
 : new-line-ok? ( lines -- ? )
-    max-empty-line-count dup swapd short tail* [ second empty? ] count > ;
+    max-empty-line-count dup swapd short tail* [ second "" = ] count > ;
 
 : add-new-line ( lines -- lines' )
     dup new-line-ok? [ { 0 "" } suffix ] when ;
@@ -31,14 +31,23 @@ CONSTANT: max-empty-line-count 2
     text>> replace-entities
     '[ unclip-last first2 _ append 2array suffix ] change-lines ;
 
-: process-block ( state closing? name -- state' )
-    nip { "p" "div" "br" "blockquote" } member?
-    [ [ add-new-line ] change-lines ] when ;
+: process-block ( state name closing? -- state' )
+    2array
+    '[ _
+        [
+            { "pre" "p" "div" "br" "blockquote" } [ f 2array ] map in?
+            [ add-new-line ] when
+        ]
+        [
+            ! Block tags may not end with an empty string.
+            { "div" "blockquote" } [ t 2array ] map in?
+            [ unclip-last dup second "" = [ drop ] [ suffix ] if ] when
+        ] bi
+    ] change-lines ;
 
 : process-tag ( state tag -- state' )
     dup name>> text =
-    [ process-text ]
-    [ [ closing?>> ] keep name>> process-block ] if ;
+    [ process-text ] [ [ name>> ] keep closing?>> process-block ] if ;
 
 : tags>string ( tags -- string )
     ! Stray empty text tags are not interesting

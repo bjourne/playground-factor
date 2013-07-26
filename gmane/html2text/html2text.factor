@@ -1,25 +1,31 @@
 USING:
     accessors
     arrays
+    combinators
     fry
     html.parser html.parser.analyzer
+    io
     kernel
     math
+    present
     sequences
     sets
+    shuffle
     splitting
     xml xml.entities.html ;
 IN: gmane.html2text
 
-TUPLE: state lines indent closing? ;
+TUPLE: state lines indent in-pre? ;
 
 CONSTANT: max-empty-line-count 2
+
+CONSTANT: quote-string " > "
 
 : new-line-ok? ( lines -- ? )
     max-empty-line-count dup swapd short tail* [ second "" = ] count > ;
 
-: add-new-line ( lines -- lines' )
-    dup new-line-ok? [ { 0 "" } suffix ] when ;
+: add-new-line ( lines indent -- lines' )
+    '[ _ "" 2array suffix ] over new-line-ok? swap when ;
 
 : remove-all ( seq subseqs -- seq )
     swap [ { } replace ] reduce ;
@@ -28,33 +34,38 @@ CONSTANT: max-empty-line-count 2
     '[ _ string>xml-chunk ] with-html-entities first ;
 
 : process-text ( state tag -- state' )
-    text>> replace-entities
+    text>> replace-entities over in-pre?>> [ "\n" "" replace ] unless
     '[ unclip-last first2 _ append 2array suffix ] change-lines ;
 
-: process-block ( state name closing? -- state' )
-    2array
-    '[ _
+: process-block ( state tagpair -- state' )
+    [ '[ _ { "blockquote" f } = 1 0 ? + ] change-indent ] keep
+    [
+        { "pre" "p" "div" "br" "blockquote" } [ f 2array ] map in?
+        [ dup indent>> '[ _ add-new-line ] change-lines ] when
+    ] keep
+    [
+        ! Block tags may not end with an empty string.
+        { { "div" t } { "blockquote" t } } in?
         [
-            { "pre" "p" "div" "br" "blockquote" } [ f 2array ] map in?
-            [ add-new-line ] when
-        ]
-        [
-            ! Block tags may not end with an empty string.
-            { "div" "blockquote" } [ t 2array ] map in?
-            [ unclip-last dup second "" = [ drop ] [ suffix ] if ] when
-        ] bi
-    ] change-lines ;
+            [ unclip-last dup second "" = [ drop ] [ suffix ] if ] change-lines
+        ] when
+    ] keep
+    [ '[ _ { "blockquote" t } = 1 0 ? - ] change-indent ] keep
+    first2 swap "pre" = [ not >>in-pre? ] [ drop ] if ;
 
 : process-tag ( state tag -- state' )
     dup name>> text =
-    [ process-text ] [ [ name>> ] keep closing?>> process-block ] if ;
+    [ process-text ] [ [ name>> ] keep closing?>> 2array process-block ] if ;
+
+: lines>string ( seq -- str )
+    [ first2 [ [ quote-string ] replicate concat ] dip append ] map "\n" join ;
 
 : tags>string ( tags -- string )
     ! Stray empty text tags are not interesting
     remove-blank-text
     ! Skip content within script tags
     dup [ name>> "script" = ] find-between-all remove-all
-    ! Run it through the paring process
+    ! Run it through the parsing process
     { } 0 f state boa [ process-tag ] reduce lines>>
     ! Convert the lines to a plain text string
-    [ second ] map "\n" join ;
+    lines>string ;

@@ -63,9 +63,6 @@ TUPLE: parser-state lines pre? indent n-blanks ;
     '[ unclip-last first2 _ append 2array suffix ] change-lines
     0 >>n-blanks ;
 
-: add-lines ( state lines -- state' )
-    dupd [ [ indent>> ] dip 2array ] with map '[ _ append ] change-lines ;
-
 : process-tag ( state tag -- state' )
     dup [ name>> ] keep closing?>> 2array
     {

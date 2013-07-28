@@ -7,10 +7,8 @@ USING:
     io
     kernel
     math
-    present
     sequences sequences.extras
     sets
-    shuffle
     splitting
     unicode.categories
     wrap.strings
@@ -29,8 +27,7 @@ CONSTANT: fill-column 78
     max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
 
 : add-new-line ( lines indent -- lines' )
-    swap dup new-line-ok?
-    [ swap "" ] [ unclip-last last swapd ] if 2array suffix ;
+    over new-line-ok? [ "" ] [ swap unclip-last last swapd ] if 2array suffix ;
 
 : replace-entities ( html-str -- str )
     '[ _ string>xml-chunk ] with-html-entities first ;
@@ -79,9 +76,11 @@ CONSTANT: fill-column 78
 : fill-columns ( indent -- cols )
     quote-string length * fill-column swap - ;
 
+: split1*-when ( str quot -- before after )
+    dupd find drop [ 0 ] unless* cut ; inline
+
 : fill-paragraph ( indent str -- lines )
-    ! Dont reformat paragraphs that are purposefully indented.
-    dup "  " mismatch [ over fill-columns wrap-string ] when
+    dupd [ blank? not ] split1*-when rot fill-columns rot wrap-indented-string
     "\n" split [ 2array ] with map ;
 
 : lines>string ( lines -- str )

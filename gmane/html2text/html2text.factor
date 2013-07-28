@@ -8,7 +8,7 @@ USING:
     kernel
     math
     present
-    sequences
+    sequences sequences.extras
     sets
     shuffle
     splitting
@@ -26,10 +26,11 @@ CONSTANT: quote-string " > "
 CONSTANT: fill-column 78
 
 : new-line-ok? ( lines -- ? )
-    max-empty-line-count dup swapd short tail* [ second "" = ] count > ;
+    max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
 
 : add-new-line ( lines indent -- lines' )
-    '[ _ "" 2array suffix ] over new-line-ok? swap when ;
+    swap dup new-line-ok?
+    [ swap "" ] [ unclip-last last swapd ] if 2array suffix ;
 
 : replace-entities ( html-str -- str )
     '[ _ string>xml-chunk ] with-html-entities first ;
@@ -38,14 +39,14 @@ CONSTANT: fill-column 78
     [ unclip-last first2 ] dip append 2array suffix ;
 
 : extra-lines ( lines new-lines -- lines' )
-    [ dup first first ] dip [ 2array ] with map append ;
+    over last first '[ _ swap 2array ] map append ;
 
 : add-lines ( lines new-lines -- lines' )
     unclip swap [ continue-line ] [ extra-lines ] bi* ;
 
 ! The rules for what tags causes new lines are somewhat arbitrary and
 ! choosen based on what makes the rendered emails look the best.
-: line-breaking-tags ( -- tagpairs )
+: line-breaking-tags ( -- tagdescs )
     { "pre" "p" "div" "br" "blockquote" } [ f 2array ] map { "p" t } suffix ;
 
 : process-text ( state tag -- state' )
@@ -53,33 +54,39 @@ CONSTANT: fill-column 78
     in-pre?>> [ "\n" split ] [ "\n" "" replace 1array ] if
     '[ _ add-lines ] change-lines ;
 
-: process-block ( state tagpair -- state' )
-    [ '[ _ { "blockquote" f } = 1 0 ? + ] change-indent ] keep
-    [
-        line-breaking-tags in?
-        [ dup indent>> '[ _ add-new-line ] change-lines ] when
-    ] keep
-    [
-        ! Block tags may not end with an empty string.
-        { { "div" t } { "blockquote" t } } in?
+: process-block ( state tagdesc -- state' )
+    {
+        [ '[ _ { "blockquote" f } = 1 0 ? + ] change-indent ]
         [
-            [ unclip-last dup second "" = [ drop ] [ suffix ] if ] change-lines
-        ] when
-    ] keep
-    [ '[ _ { "blockquote" t } = 1 0 ? - ] change-indent ] keep
-    first2 swap "pre" = [ not >>in-pre? ] [ drop ] if ;
+            line-breaking-tags in?
+            [ dup indent>> '[ _ add-new-line ] change-lines ] when
+        ]
+        [ '[ _ { "blockquote" t } = 1 0 ? - ] change-indent ]
+        [
+            ! Block tags must not end with an empty string.
+            { { "div" t } { "blockquote" t } } in?
+            [
+                [ dup last "" last= [ but-last ] when ] change-lines
+            ] when
+        ]
+        [ first2 swap "pre" = [ not >>in-pre? ] [ drop ] if ]
+    } cleave ;
 
 : process-tag ( state tag -- state' )
     dup name>> text =
     [ process-text ] [ [ name>> ] keep closing?>> 2array process-block ] if ;
 
+: fill-columns ( indent -- cols )
+    quote-string length * fill-column swap - ;
+
 : fill-paragraph ( indent str -- lines )
-    swap dup quote-string length * fill-column swap - swapd wrap-string
+    ! Dont reformat paragraphs that are purposefully indented.
+    dup "  " mismatch [ over fill-columns wrap-string ] when
     "\n" split [ 2array ] with map ;
 
 : lines>string ( lines -- str )
     [ first2 fill-paragraph ] map concat
-    [ first2 [ [ quote-string ] replicate concat ] dip append ] map
+    [ first2 swap [ quote-string ] replicate concat prepend ] map
     ! Merge the lines and ensure the string doesn't start or end with
     ! whitespace.
     "\n" join [ blank? ] trim ;

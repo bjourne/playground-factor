@@ -17,11 +17,9 @@ IN: gmane.html2text
 
 TUPLE: state lines indent in-pre? ;
 
-CONSTANT: max-empty-line-count 2
-
-CONSTANT: quote-string " > "
-
-CONSTANT: fill-column 78
+CONSTANT: max-empty-line-count  2
+CONSTANT: quote-string          " > "
+CONSTANT: fill-column           78
 
 : new-line-ok? ( lines -- ? )
     max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
@@ -94,6 +92,6 @@ CONSTANT: fill-column 78
     ! Stray empty text tags are not interesting
     remove-blank-text
     ! Run it through the parsing process
-    { } 0 f state boa [ process-tag ] reduce lines>>
+    { { 0 "" } } 0 f state boa [ process-tag ] reduce lines>>
     ! Convert the lines to a plain text string
     lines>string ;

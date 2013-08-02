@@ -16,14 +16,6 @@ IN: gmane.html2text
 
 TUPLE: state lines indent in-pre? ;
 
-CONSTANT: max-empty-line-count  2
-
-: new-line-ok? ( lines -- ? )
-    max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
-
-: add-new-line ( lines indent -- lines' )
-    over new-line-ok? [ "" ] [ swap unclip-last last swapd ] if 2array suffix ;
-
 : replace-entities ( html-str -- str )
     '[ _ string>xml-chunk ] with-html-entities first ;
 
@@ -51,7 +43,7 @@ CONSTANT: max-empty-line-count  2
         [ '[ _ { "blockquote" f } = 1 0 ? + ] change-indent ]
         [
             line-breaking-tags in?
-            [ dup indent>> '[ _ add-new-line ] change-lines ] when
+            [ dup indent>> '[ _ "" 2array suffix ] change-lines ] when
         ]
         [ '[ _ { "blockquote" t } = 1 0 ? - ] change-indent ]
         [
@@ -68,10 +60,20 @@ CONSTANT: max-empty-line-count  2
     dup name>> text =
     [ process-text ] [ [ name>> ] keep closing?>> 2array process-block ] if ;
 
+CONSTANT: max-empty-line-count  1
+
+: empty-line-ok? ( lines -- ? )
+    max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
+
+: filter-empty-lines ( lines line -- lines' )
+    2dup [ empty-line-ok? ] [ "" last= not ] bi* or [ suffix ] [ drop ] if ;
+
 : tags>string ( tags -- string )
     ! Stray empty text tags are not interesting
     remove-blank-text
     ! Run it through the parsing process
     { { 0 "" } } 0 f state boa [ process-tag ] reduce lines>>
+    ! Filter out long sequences of repeated empty lines
+    { } [ filter-empty-lines ] reduce
     ! Convert the lines to a plain text string
     [ first2 line>string ] map "\n" join ;

@@ -4,7 +4,7 @@ IN: gmane.html2text.paragraphs
 CONSTANT: line-width   78
 CONSTANT: quote-string " > "
 
-: string-prefix ( indent str -- prefix )
+: string-prefix ( quote-level str -- prefix )
     [ blank? not ] split1-when drop
     [ [ quote-string ] replicate concat ] dip append ;
 
@@ -13,6 +13,5 @@ CONSTANT: quote-string " > "
 : wrap-string2 ( string width indent -- newstring )
     [ wrap-indented-string ] [ '[ _ ] ] bi when-empty ;
 
-: lines>string ( lines -- str )
-    [ first2 [ string-prefix ] keep line-width rot wrap-string2 ] map
-    "\n" join ;
+: line>string ( quote-level str -- str' )
+    [ string-prefix ] keep line-width rot wrap-string2 ;

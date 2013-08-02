@@ -3,23 +3,20 @@ USING:
     arrays
     combinators
     fry
+    gmane.html2text.paragraphs
     html.parser html.parser.analyzer
-    io
     kernel
     math
     sequences sequences.extras
     sets
     splitting
     unicode.categories
-    wrap.strings
     xml xml.entities.html ;
 IN: gmane.html2text
 
 TUPLE: state lines indent in-pre? ;
 
 CONSTANT: max-empty-line-count  2
-CONSTANT: quote-string          " > "
-CONSTANT: fill-column           78
 
 : new-line-ok? ( lines -- ? )
     max-empty-line-count dup swapd short tail* [ "" last= ] count > ;
@@ -71,27 +68,10 @@ CONSTANT: fill-column           78
     dup name>> text =
     [ process-text ] [ [ name>> ] keep closing?>> 2array process-block ] if ;
 
-: fill-columns ( indent -- cols )
-    quote-string length * fill-column swap - ;
-
-: split1*-when ( str quot -- before after )
-    dupd find drop [ 0 ] unless* cut ; inline
-
-: fill-paragraph ( indent str -- lines )
-    dupd [ blank? not ] split1*-when rot fill-columns rot wrap-indented-string
-    "\n" split [ 2array ] with map ;
-
-: lines>string ( lines -- str )
-    [ first2 fill-paragraph ] map concat
-    [ first2 swap [ quote-string ] replicate concat prepend ] map
-    ! Merge the lines and ensure the string doesn't start or end with
-    ! whitespace.
-    "\n" join [ blank? ] trim ;
-
 : tags>string ( tags -- string )
     ! Stray empty text tags are not interesting
     remove-blank-text
     ! Run it through the parsing process
     { { 0 "" } } 0 f state boa [ process-tag ] reduce lines>>
     ! Convert the lines to a plain text string
-    lines>string ;
+    [ first2 line>string ] map "\n" join ;

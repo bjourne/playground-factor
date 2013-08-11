@@ -48,7 +48,7 @@ TUPLE: index-result id subject word-count elapsed-time ;
   [ { word word-to-mail indexed-mail } ensure-tables ] with-mydb ;
 
 : get-search-string ( mail -- str )
-    <mirror> { "body" "group" "sender" "subject" } [ of ] with map " " join ;
+    <mirror> { "group" "sender" "subject" "body" } [ of ] with map "\n" join ;
 
 : string>tokens ( str -- seq )
   >lower [ letter? not ] split-when harvest members ;

@@ -1,23 +1,22 @@
 USING:
     accessors
     arrays
-    combinators
+    assocs
+    continuations
     fry
-    gmane.html2text.paragraphs
-    html.parser html.parser.analyzer
+    gmane.html2text.paragraphs gmane.html2text.tagpath
+    html.parser
     kernel
     math
     sequences sequences.extras
     sets
     splitting
-    unicode.categories
     xml xml.entities.html ;
 IN: gmane.html2text
 
-TUPLE: state lines indent in-pre? ;
-
 : replace-entities ( html-str -- str )
-    '[ _ string>xml-chunk ] with-html-entities first ;
+    [ replace-entities ]  with-html-entities ;
+    ! [ [ replace-entities ] with-html-entities ] [ drop ] recover ;
 
 : continue-line ( lines str -- lines' )
     [ unclip-last first2 ] dip append 2array suffix ;
@@ -28,37 +27,28 @@ TUPLE: state lines indent in-pre? ;
 : add-lines ( lines new-lines -- lines' )
     unclip swap [ continue-line ] [ extra-lines ] bi* ;
 
-! The rules for what tags causes new lines are somewhat arbitrary and
-! choosen based on what makes the rendered emails look the best.
-: line-breaking-tags ( -- tagdescs )
+: process-text ( lines path tag -- lines' )
+    text>> replace-entities swap dup { "script" "head" } intersects?
+    [ 2drop ]
+    [ "pre" swap in? [ "\n" split ] [ "\n" "" replace 1array ] if add-lines ]
+    if ;
+
+: line-breaks ( -- tagdescs )
     { "pre" "p" "div" "br" "blockquote" } [ f 2array ] map { "p" t } suffix ;
 
-: process-text ( state tag -- state' )
-    text>> replace-entities over
-    in-pre?>> [ "\n" split ] [ "\n" "" replace 1array ] if
-    '[ _ add-lines ] change-lines ;
+: process-block ( lines path tag -- lines' )
+    [ name>> ] [ closing?>> ] bi 2array
+    [
+        line-breaks in?
+        [ [ "blockquote" = ] count "" 2array suffix ] [ drop ] if
+    ]
+    [
+        nip { { "div" t } { "blockquote" t } } in?
+        [ dup last "" last= [ but-last ] when ] when
+    ] 2bi ;
 
-: process-block ( state tagdesc -- state' )
-    {
-        [ '[ _ { "blockquote" f } = 1 0 ? + ] change-indent ]
-        [
-            line-breaking-tags in?
-            [ dup indent>> '[ _ "" 2array suffix ] change-lines ] when
-        ]
-        [ '[ _ { "blockquote" t } = 1 0 ? - ] change-indent ]
-        [
-            ! Block tags must not end with an empty string.
-            { { "div" t } { "blockquote" t } } in?
-            [
-                [ dup last "" last= [ but-last ] when ] change-lines
-            ] when
-        ]
-        [ first2 swap "pre" = [ not >>in-pre? ] [ drop ] if ]
-    } cleave ;
-
-: process-tag ( state tag -- state' )
-    dup name>> text =
-    [ process-text ] [ [ name>> ] keep closing?>> 2array process-block ] if ;
+: process-tag ( lines path tag -- lines' )
+    dup name>> text = [ process-text ] [ process-block ] if ;
 
 CONSTANT: max-empty-line-count  1
 
@@ -69,11 +59,6 @@ CONSTANT: max-empty-line-count  1
     2dup [ empty-line-ok? ] [ "" last= not ] bi* or [ suffix ] [ drop ] if ;
 
 : tags>string ( tags -- string )
-    ! Stray empty text tags are not interesting
-    remove-blank-text
-    ! Run it through the parsing process
-    { { 0 "" } } 0 f state boa [ process-tag ] reduce lines>>
-    ! Filter out long sequences of repeated empty lines
+    dup tag-paths swap zip { { 0 "" } } [ first2 process-tag ] reduce
     { } [ filter-empty-lines ] reduce
-    ! Convert the lines to a plain text string
     [ first2 line>string ] map "\n" join ;

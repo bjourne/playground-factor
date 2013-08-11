@@ -10,6 +10,8 @@ USING:
     strings ;
 IN: gmane.db
 
+
+
 TUPLE: mail id mid group date sender subject body ;
 
 mail "mail" {

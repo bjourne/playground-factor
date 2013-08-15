@@ -15,8 +15,7 @@ USING:
 IN: gmane.html2text
 
 : replace-entities ( html-str -- str )
-    [ replace-entities ]  with-html-entities ;
-    ! [ [ replace-entities ] with-html-entities ] [ drop ] recover ;
+    [ [ string>xml-chunk ] with-html-entities first ] [ drop ] recover ;
 
 : continue-line ( lines str -- lines' )
     [ unclip-last first2 ] dip append 2array suffix ;

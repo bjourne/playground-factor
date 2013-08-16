@@ -55,11 +55,25 @@ CONSTANT: shortcut-areas
                 { key "C-g" }
                 { desc "abort the current operation" }
              }
+             T{ shortcut
+                { key "C-u C-x =" }
+                { desc "describe character at point" }
+             }
 
          }
        }
     }
-
+    T{ area
+       { name "magit-status" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "F F" }
+                { desc "run git pull" }
+             }
+         }
+       }
+    }
 }
 
 : printff ( -- )

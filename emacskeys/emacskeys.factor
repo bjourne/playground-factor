@@ -7,6 +7,21 @@ TUPLE: shortcut key desc ;
 CONSTANT: shortcut-areas
 {
     T{ area
+       { name "dired" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "D" }
+                { desc "delete file at point" }
+             }
+             T{ shortcut
+                { key "^" }
+                { desc "visit the parent directory" }
+             }
+         }
+       }
+    }
+    T{ area
        { name "emacs-lisp-mode" }
        { shortcuts
          {
@@ -14,6 +29,45 @@ CONSTANT: shortcut-areas
                 { key "C-x C-e" }
                 { desc "evaluate the emacs lisp expression before point" }
              }
+         }
+       }
+    }
+    T{ area
+       { name "fuel-mode" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "C-c C-d d" }
+                { desc "open the manual for symbol at point" }
+             }
+             T{ shortcut
+                { key "C-c C-d C-e" }
+                { desc "show stack effect for word at point" }
+             }
+             T{ shortcut
+                { key "C-c C-d v" }
+                { desc "show all words in vocab" }
+             }
+             T{ shortcut
+                { key "M-." }
+                { desc "edit the word at point" }
+             }
+         }
+       }
+    }
+    T{ area
+       { name "general" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "C-g" }
+                { desc "abort the current operation" }
+             }
+             T{ shortcut
+                { key "C-x C-v RET" }
+                { desc "reload the buffers file (using find alterate file)" }
+             }
+
          }
        }
     }
@@ -39,27 +93,6 @@ CONSTANT: shortcut-areas
          }
        }
     }
-    T{ area
-       { name "general" }
-       { shortcuts
-         {
-             T{ shortcut
-                { key "C-g" }
-                { desc "abort the current operation" }
-             }
-             T{ shortcut
-                { key "C-g" }
-                { desc "abort the current operation" }
-             }
-             T{ shortcut
-                { key "C-g" }
-                { desc "abort the current operation" }
-             }
-
-         }
-       }
-    }
-
 }
 
 : printff ( -- )

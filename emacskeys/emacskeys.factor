@@ -67,7 +67,10 @@ CONSTANT: shortcut-areas
                 { key "C-x C-v RET" }
                 { desc "reload the buffers file (using find alterate file)" }
              }
-
+             T{ shortcut
+                { key "C-u C-x =" }
+                { desc "describe character at point" }
+             }
          }
        }
     }
@@ -89,6 +92,17 @@ CONSTANT: shortcut-areas
              T{ shortcut
                 { key "D" }
                 { desc "kill marked buffer" }
+             }
+         }
+       }
+    }
+    T{ area
+       { name "magit-status" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "F F" }
+                { desc "run git pull" }
              }
          }
        }

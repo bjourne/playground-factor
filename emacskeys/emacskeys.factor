@@ -104,6 +104,21 @@ CONSTANT: shortcut-areas
                 { key "F F" }
                 { desc "run git pull" }
              }
+             T{ shortcut
+                { key "b v" }
+                { desc "list local and remote branches" }
+             }
+         }
+       }
+    }
+    T{ area
+       { name "nxml-mode" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "C-c C-f" }
+                { desc "insert end tag for element containing point" }
+             }
          }
        }
     }

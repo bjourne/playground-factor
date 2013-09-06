@@ -108,6 +108,10 @@ CONSTANT: shortcut-areas
                 { key "b v" }
                 { desc "list local and remote branches" }
              }
+             T{ shortcut
+                { key "g" }
+                { desc "refresh the status buffer" }
+             }
          }
        }
     }

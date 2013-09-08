@@ -117,6 +117,26 @@ CONSTANT: shortcut-areas
                 { key "k" }
                 { desc "delete an untracked file" }
              }
+             T{ shortcut
+                { key "b v" }
+                { desc "list local and remote branches" }
+             }
+             T{ shortcut
+                { key "g" }
+                { desc "refresh the status buffer" }
+             }
+         }
+       }
+    }
+    T{ area
+       { name "nxml-mode" }
+       { shortcuts
+         {
+             T{ shortcut
+                { key "C-c C-f" }
+                { desc "insert end tag for element containing point" }
+>>>>>>> 54e52497eaec47a111a2db48278cdb5382bee86d
+             }
          }
        }
     }

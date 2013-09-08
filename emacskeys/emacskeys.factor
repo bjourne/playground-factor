@@ -33,6 +33,15 @@ CONSTANT: shortcut-areas
        }
     }
     T{ area
+       { name "fuel-listener-mode" }
+       { shortcuts
+         T{ shortcut
+            { key "C-c C-w" }
+            { desc "open the manual for symbol at point" }
+         }
+       }
+    }
+    T{ area
        { name "fuel-mode" }
        { shortcuts
          {
@@ -103,6 +112,10 @@ CONSTANT: shortcut-areas
              T{ shortcut
                 { key "F F" }
                 { desc "run git pull" }
+             }
+             T{ shortcut
+                { key "k" }
+                { desc "delete an untracked file" }
              }
          }
        }

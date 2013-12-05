@@ -4,6 +4,7 @@ USING:
     continuations
     imap
     kernel
+    math
     namespaces
     pcre
     sequences
@@ -32,6 +33,18 @@ SYMBOLS: email password ;
     [ host <imap4ssl> f f login ] [ ind>> ] recover
 ] unit-test
 
+! Fails unless you have set the settings.
+: imap-login ( -- imap4 )
+    host <imap4ssl> dup email get password get login drop ;
+
 [ t ] [
     host <imap4ssl> email get password get login empty? not
+] unit-test
+
+[ t ] [
+    imap-login "*" list-folders empty? not
+] unit-test
+
+[ t ] [
+    imap-login "INBOX" select-folder 0 >
 ] unit-test

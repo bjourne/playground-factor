@@ -9,6 +9,7 @@ USING:
     io.sockets io.sockets.secure
     io.streams.duplex
     kernel
+    math.parser
     sequences
     splitting ;
 QUALIFIED: pcre
@@ -21,11 +22,7 @@ CONSTANT: UNTAGGED_RESPONSE  "^\\* (?P<type>[A-Z-]+)(?: (?P<data>.*))?$"
 CONSTANT: IMAP4_PORT     143
 CONSTANT: IMAP4_SSL_PORT 993
 
-TUPLE: imap4ssl stream remote tagpre tagnum ;
-
-! Stuff with output stream
-: command ( str -- )
-    write crlf flush ;
+TUPLE: imap4ssl stream tagpre tagnum ;
 
 ! Input stream
 : check-status ( ind data -- )
@@ -45,7 +42,7 @@ TUPLE: imap4ssl stream remote tagpre tagnum ;
 
 : command-response ( imap4 command -- x )
     swap [ tagpre>> ] [ stream>> ] bi
-    [ [ swap " " glue command ] [ read-response ] bi ] with-stream* ;
+    [ [ swap " " glue write crlf flush ] [ read-response ] bi ] with-stream* ;
 
 ! Special parsing
 : parse-capabilities ( seq -- caps )
@@ -55,9 +52,13 @@ TUPLE: imap4ssl stream remote tagpre tagnum ;
     "\\* LIST \\(([^\\)]+)\\) \"([^\"]+)\" \"([^\"]+)\"" pcre:findall
     first 1 tail values ;
 
+: parse-select-folder ( seq -- count )
+    [ "\\* (\\d+) EXISTS" pcre:findall [ f ] when-empty ] map-find
+    drop first second second string>number ;
+
 ! Constructor
 : <imap4ssl> ( host -- imap4 )
-    IMAP4_SSL_PORT <inet> <secure> ascii <client> "ABCD" 0 imap4ssl boa
+    IMAP4_SSL_PORT <inet> <secure> ascii <client> drop "ABCD" 0 imap4ssl boa
     dup stream>> [ "\\*" read-response ] with-stream* drop ;
 
 ! IMAP commands
@@ -67,5 +68,8 @@ TUPLE: imap4ssl stream remote tagpre tagnum ;
 : login ( imap4 user pass -- caps )
     quote "LOGIN %s %s" sprintf command-response parse-capabilities ;
 
-: list-folders ( imap4 -- dirs )
-    "LIST \"\" *" command-response [ parse-list-folders ] map ;
+: list-folders ( imap4 directory -- folders )
+    "LIST \"%s\" *" sprintf command-response [ parse-list-folders ] map ;
+
+: select-folder ( imap4 mailbox -- x )
+    "SELECT %s" sprintf command-response parse-select-folder ;

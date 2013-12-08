@@ -41,12 +41,12 @@ SYMBOLS: email password ;
 : imap-login ( -- imap4 )
     host <imap4ssl> dup [ email get password get login drop ] with-stream* ;
 
-[ t ] [
-    host <imap4ssl> [ email get password get login ] with-stream empty? not
+[ f ] [
+    host <imap4ssl> [ email get password get login ] with-stream empty?
 ] unit-test
 
-[ t ] [
-    imap-login [ "*" list-folders empty? not ] with-stream
+[ f ] [
+    imap-login [ "*" list-folders empty? ] with-stream
 ] unit-test
 
 ! You need to have some mails in your inbox!
@@ -55,14 +55,24 @@ SYMBOLS: email password ;
 ] unit-test
 
 [ f ] [
-    imap-login [ "INBOX" select-folder drop search-mails ] with-stream empty?
+    imap-login [
+        "INBOX" select-folder drop "ALL" search-mails
+    ] with-stream empty?
 ] unit-test
 
 ! Read some mails
 [ 5 ] [
-    imap-login
-    [
-        "INBOX" select-folder drop search-mails
+    imap-login [
+        "INBOX" select-folder drop "ALL" search-mails
         5 sample "(RFC822)" fetch-mails [ string? ] count
     ] with-stream
+] unit-test
+
+! Subject searching
+[ f ] [
+    imap-login [
+        "py-lists/python-list" select-folder drop
+        "(SUBJECT \"google groups\")" search-mails
+        "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
+    ] with-stream empty?
 ] unit-test

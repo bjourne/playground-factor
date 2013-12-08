@@ -2,7 +2,6 @@ USING:
     accessors
     arrays
     assocs
-    combinators
     formatting
     fry
     io io.crlf
@@ -70,6 +69,7 @@ CONSTANT: IMAP4_SSL_PORT 993
 ! Constructor
 : <imap4ssl> ( host -- imap4 )
     IMAP4_SSL_PORT <inet> <secure> ascii <client> drop
+    ! Read the useless welcome message.
     dup [ "\\*" read-response drop ] with-stream* ;
 
 ! IMAP commands
@@ -85,8 +85,8 @@ CONSTANT: IMAP4_SSL_PORT 993
 : select-folder ( mailbox -- count )
     "SELECT %s" sprintf command-response parse-select-folder ;
 
-: search-mails ( -- uids )
-    "UID SEARCH ALL" command-response parse-search-mails ;
+: search-mails ( query -- uids )
+    "UID SEARCH %s" sprintf command-response parse-search-mails ;
 
 : fetch-mails ( seq<number> data-spec -- texts )
     [ [ number>string ] map "," join ] dip

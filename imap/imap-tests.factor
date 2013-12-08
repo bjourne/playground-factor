@@ -56,14 +56,14 @@ SYMBOLS: email password ;
 
 [ f ] [
     imap-login [
-        "INBOX" select-folder drop "ALL" search-mails
+        "INBOX" select-folder drop "ALL" "" search-mails
     ] with-stream empty?
 ] unit-test
 
 ! Read some mails
 [ 5 ] [
     imap-login [
-        "INBOX" select-folder drop "ALL" search-mails
+        "INBOX" select-folder drop "ALL" "" search-mails
         5 sample "(RFC822)" fetch-mails [ string? ] count
     ] with-stream
 ] unit-test
@@ -72,7 +72,7 @@ SYMBOLS: email password ;
 [ f ] [
     imap-login [
         "py-lists/python-list" select-folder drop
-        "(SUBJECT \"google groups\")" search-mails
+        "SUBJECT" "google groups" search-mails
         "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
     ] with-stream empty?
 ] unit-test

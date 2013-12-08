@@ -2,6 +2,7 @@ USING:
     accessors
     arrays
     assocs
+    combinators
     formatting
     fry
     io io.crlf
@@ -17,36 +18,43 @@ IN: imap
 
 ERROR: imap4-error ind data ;
 
-CONSTANT: UNTAGGED_RESPONSE  "^\\* (?P<type>[A-Z-]+)(?: (?P<data>.*))?$"
-
 CONSTANT: IMAP4_PORT     143
 CONSTANT: IMAP4_SSL_PORT 993
-
-TUPLE: imap4ssl stream tagpre tagnum ;
 
 ! Input stream
 : check-status ( ind data -- )
     over "OK" = not [ imap4-error ] [ 2drop ]  if ;
 
+: read-response-chunk ( stop-expr -- item ? )
+    read-?crlf swap dupd pcre:findall
+    [
+        dup "^.*{(\\d+)}$" pcre:findall
+        [
+            dup "^\\* (\\d+) [A-Z-]+ (.*)$" pcre:findall
+            [ ] [ nip first third second ] if-empty
+        ]
+        [
+            ! Literal item to read, such as message body.
+            nip first second second string>number read
+            read-?crlf drop
+        ] if-empty t
+    ]
+    [ nip first 1 tail values f ] if-empty ;
+
 : read-response ( tag -- lines )
-    "^%s (?P<ind>BAD|NO|OK) (?P<data>.*)$" sprintf
-    ! Can a better combinator than 'loop' be used?
-    '[
-        read-?crlf dup _ pcre:findall
-        [ suffix t ]
-        [ nip first 1 tail values suffix f ] if-empty
-    ] { } swap loop unclip-last first2 check-status ;
+    "^%s (BAD|NO|OK) (.*)$" sprintf
+    '[ _ read-response-chunk [ suffix ] dip ] { } swap loop
+    unclip-last first2 check-status ;
 
 : quote ( str -- str' )
     "\\" "\\\\" replace "\"" "\\" replace "\"" "\"" surround ;
 
-: command-response ( imap4 command -- x )
-    swap [ tagpre>> ] [ stream>> ] bi
-    [ [ swap " " glue write crlf flush ] [ read-response ] bi ] with-stream* ;
+: command-response ( command -- obj )
+    "ABCD" [ swap " " glue write crlf flush ] [ read-response ] bi ;
 
 ! Special parsing
-: parse-capabilities ( seq -- caps )
-    first UNTAGGED_RESPONSE pcre:findall first "data" of " " split ;
+: parse-items ( seq -- items )
+    first " " split 2 tail ;
 
 : parse-list-folders ( str -- folder )
     "\\* LIST \\(([^\\)]+)\\) \"([^\"]+)\" \"([^\"]+)\"" pcre:findall
@@ -56,20 +64,30 @@ TUPLE: imap4ssl stream tagpre tagnum ;
     [ "\\* (\\d+) EXISTS" pcre:findall [ f ] when-empty ] map-find
     drop first second second string>number ;
 
+: parse-search-mails ( seq -- uids )
+    parse-items [ string>number ] map ;
+
 ! Constructor
 : <imap4ssl> ( host -- imap4 )
-    IMAP4_SSL_PORT <inet> <secure> ascii <client> drop "ABCD" 0 imap4ssl boa
-    dup stream>> [ "\\*" read-response ] with-stream* drop ;
+    IMAP4_SSL_PORT <inet> <secure> ascii <client> drop
+    dup [ "\\*" read-response drop ] with-stream* ;
 
 ! IMAP commands
-: capabilities ( imap4 -- caps )
-    "CAPABILITY" command-response parse-capabilities ;
+: capabilities ( -- caps )
+    "CAPABILITY" command-response parse-items ;
 
-: login ( imap4 user pass -- caps )
-    quote "LOGIN %s %s" sprintf command-response parse-capabilities ;
+: login ( user pass -- caps )
+    quote "LOGIN %s %s" sprintf command-response parse-items ;
 
-: list-folders ( imap4 directory -- folders )
+: list-folders ( directory -- folders )
     "LIST \"%s\" *" sprintf command-response [ parse-list-folders ] map ;
 
-: select-folder ( imap4 mailbox -- x )
+: select-folder ( mailbox -- count )
     "SELECT %s" sprintf command-response parse-select-folder ;
+
+: search-mails ( -- uids )
+    "UID SEARCH ALL" command-response parse-search-mails ;
+
+: fetch-mails ( seq<number> data-spec -- texts )
+    [ [ number>string ] map "," join ] dip
+    "UID FETCH %s %s" sprintf command-response ;

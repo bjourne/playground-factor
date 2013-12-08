@@ -3,12 +3,15 @@ USING:
     arrays
     continuations
     imap
+    io.streams.duplex
     kernel
     math
     namespaces
     pcre
+    random
     sequences
     sets
+    strings
     tools.test ;
 IN: imap.tests
 
@@ -17,34 +20,49 @@ CONSTANT: host "imap.gmail.com"
 SYMBOLS: email password ;
 
 [ t ] [
-    host <imap4ssl> imap4ssl?
+    host <imap4ssl> duplex-stream?
 ] unit-test
 
 [ t ] [
-    host <imap4ssl> capabilities
+    host <imap4ssl> [ capabilities ] with-stream
     { "IMAP4rev1" "UNSELECT" "IDLE" "NAMESPACE" "QUOTA" } swap subset?
 ] unit-test
 
 [ "NO" ] [
-    [ host <imap4ssl> "dont@exist.com" "foo" login ] [ ind>> ] recover
+    [ host <imap4ssl> [ "dont@exist.com" "foo" login ] with-stream ]
+    [ ind>> ] recover
 ] unit-test
 
 [ "BAD" ] [
-    [ host <imap4ssl> f f login ] [ ind>> ] recover
+    [ host <imap4ssl> [ f f login ] with-stream ] [ ind>> ] recover
 ] unit-test
 
 ! Fails unless you have set the settings.
 : imap-login ( -- imap4 )
-    host <imap4ssl> dup email get password get login drop ;
+    host <imap4ssl> dup [ email get password get login drop ] with-stream* ;
 
 [ t ] [
-    host <imap4ssl> email get password get login empty? not
+    host <imap4ssl> [ email get password get login ] with-stream empty? not
 ] unit-test
 
 [ t ] [
-    imap-login "*" list-folders empty? not
+    imap-login [ "*" list-folders empty? not ] with-stream
 ] unit-test
 
+! You need to have some mails in your inbox!
 [ t ] [
-    imap-login "INBOX" select-folder 0 >
+    imap-login [ "INBOX" select-folder ] with-stream 0 >
+] unit-test
+
+[ f ] [
+    imap-login [ "INBOX" select-folder drop search-mails ] with-stream empty?
+] unit-test
+
+! Read some mails
+[ 5 ] [
+    imap-login
+    [
+        "INBOX" select-folder drop search-mails
+        5 sample "(RFC822)" fetch-mails [ string? ] count
+    ] with-stream
 ] unit-test

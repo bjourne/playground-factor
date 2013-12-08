@@ -61,10 +61,10 @@ SYMBOLS: email password ;
 ] unit-test
 
 ! Read some mails
-[ 5 ] [
+[ t ] [
     imap-login [
         "INBOX" select-folder drop "ALL" "" search-mails
-        5 sample "(RFC822)" fetch-mails [ string? ] count
+        5 sample "(RFC822)" fetch-mails [ string? ] all?
     ] with-stream
 ] unit-test
 

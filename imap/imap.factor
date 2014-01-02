@@ -8,13 +8,15 @@ USING:
     io.encodings.ascii
     io.encodings.binary
     io.encodings.string
+    io.encodings.utf7
     io.encodings.utf8
     io.sockets io.sockets.secure
     io.streams.duplex
     kernel
     math.parser
     sequences
-    splitting ;
+    splitting
+    strings ;
 QUALIFIED: pcre
 IN: imap
 
@@ -22,6 +24,9 @@ ERROR: imap4-error ind data ;
 
 CONSTANT: IMAP4_PORT     143
 CONSTANT: IMAP4_SSL_PORT 993
+
+: >utf7imap4 ( str -- str' )
+    utf7imap4 encode >string ;
 
 : check-status ( ind data -- )
     over "OK" = not [ imap4-error ] [ 2drop ]  if ;
@@ -67,7 +72,7 @@ CONSTANT: IMAP4_SSL_PORT 993
 
 : parse-list-folders ( str -- folder )
     "\\* LIST \\(([^\\)]+)\\) \"([^\"]+)\" \"([^\"]+)\"" pcre:findall
-    first 1 tail values ;
+    first 1 tail values [ utf7imap4 decode ] map ;
 
 : parse-select-folder ( seq -- count )
     [ "\\* (\\d+) EXISTS" pcre:findall [ f ] when-empty ] map-find
@@ -86,12 +91,23 @@ CONSTANT: IMAP4_SSL_PORT 993
 : login ( user pass -- caps )
     quote "LOGIN %s %s" sprintf "" command-response parse-items ;
 
+! Folder management
 : list-folders ( directory -- folders )
     "LIST \"%s\" *" sprintf "" command-response [ parse-list-folders ] map ;
 
 : select-folder ( mailbox -- count )
-    "SELECT %s" sprintf "" command-response parse-select-folder ;
+    >utf7imap4 "SELECT \"%s\"" sprintf "" command-response
+    parse-select-folder ;
 
+: create-folder ( mailbox -- )
+    >utf7imap4 "CREATE \"%s\"" sprintf "" command-response
+    drop ;
+
+: delete-folder ( mailbox -- )
+    >utf7imap4 "DELETE \"%s\"" sprintf "" command-response
+    drop ;
+
+! Mail management
 : search-mails ( data-spec str -- uids )
     [ "UID SEARCH CHARSET UTF-8 %s" sprintf ] dip utf8 encode
     command-response parse-items [ string>number ] map ;

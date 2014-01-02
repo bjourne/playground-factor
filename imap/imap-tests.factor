@@ -15,8 +15,8 @@ USING:
     tools.test ;
 IN: imap.tests
 
-CONSTANT: host "imap.gmail.com"
 ! Set these to your email account.
+CONSTANT: host "imap.gmail.com"
 SYMBOLS: email password ;
 
 [ t ] [
@@ -68,11 +68,24 @@ SYMBOLS: email password ;
     ] with-stream
 ] unit-test
 
-! Subject searching
+! Subject searching. This test is specific to my account.
 [ f ] [
     imap-login [
         "py-lists/python-list" select-folder drop
         "SUBJECT" "google groups" search-mails
         "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
-    ] with-stream empty?
+        empty?
+        ! Another search with an UNSEEN flag
+        "INBOX" select-folder drop
+        "UNSEEN SUBJECT" "week" search-mails
+        "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
+        empty?
+    ] with-stream or
+] unit-test
+
+! Folder management
+[ 0 ] [
+    imap-login [
+        "örjan" [ create-folder ] [ select-folder ] [ delete-folder ] tri
+    ] with-stream
 ] unit-test

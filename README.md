@@ -5,7 +5,7 @@ This project contains the source code for
 Factor tutorial.
 
 See also
-[Tips & Tricks)(https://github.com/bjourne/playground-factor/wiki/Tips-and-tricks).
+[Tips & Tricks](https://github.com/bjourne/playground-factor/wiki/Tips-and-tricks).
 
 
 Factor: http://factorcode.org/

@@ -1,6 +1,7 @@
 USING:
     accessors
     arrays
+    assocs
     continuations
     imap
     io.streams.duplex
@@ -88,4 +89,11 @@ SYMBOLS: email password ;
     imap-login [
         "örjan" [ create-folder ] [ select-folder ] [ delete-folder ] tri
     ] with-stream
+] unit-test
+
+! Stat folder. Again specific to my account.
+[ t ] [
+    imap-login [
+        "INBOX" { "MESSAGES" "UNSEEN" } status-folder
+    ] with-stream [ "MESSAGES" of 0 > ] [ "UNSEEN" of 0 > ] bi and
 ] unit-test

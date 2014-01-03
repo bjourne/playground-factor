@@ -4,6 +4,7 @@ USING:
     assocs
     formatting
     fry
+    grouping
     io io.crlf
     io.encodings.ascii
     io.encodings.binary
@@ -78,6 +79,10 @@ CONSTANT: IMAP4_SSL_PORT 993
     [ "\\* (\\d+) EXISTS" pcre:findall [ f ] when-empty ] map-find
     drop first second second string>number ;
 
+: parse-status ( seq -- assoc )
+    first "\\* STATUS \"[^\"]+\" \\(([^\\)]+)\\)" pcre:findall first last last
+    " " split 2 group [ string>number ] assoc-map ;
+
 ! Constructor
 : <imap4ssl> ( host -- imap4 )
     IMAP4_SSL_PORT <inet> <secure> binary <client> drop
@@ -106,6 +111,10 @@ CONSTANT: IMAP4_SSL_PORT 993
 : delete-folder ( mailbox -- )
     >utf7imap4 "DELETE \"%s\"" sprintf "" command-response
     drop ;
+
+: status-folder ( mailbox keys -- assoc )
+    [ >utf7imap4 ] dip " " join "STATUS \"%s\" (%s)" sprintf
+    "" command-response parse-status ;
 
 ! Mail management
 : search-mails ( data-spec str -- uids )

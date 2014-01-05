@@ -2,13 +2,14 @@ USING:
     accessors
     arrays
     assocs
-    calendar
+    calendar calendar.format
     combinators
     continuations
+    formatting
     imap
     io.streams.duplex
     kernel
-    math math.statistics
+    math math.parser math.statistics
     namespaces
     pcre
     random
@@ -22,18 +23,22 @@ IN: imap.tests
 CONSTANT: host "imap.gmail.com"
 SYMBOLS: email password ;
 
-: sample-mail ( -- mail )
-    {
-        "Date: Mon, 7 Feb 1994 21:52:52 -0800 (PST)"
-        "From: Fred Foobar <foobar@Blurdybloop.COM>"
+: make-mail ( from -- mail )
+    now timestamp>rfc822 swap 10000 random
+    3array {
+        "Date: %s"
+        "From: %s"
         "Subject: afternoon meeting"
         "To: mooch@owatagu.siam.edu"
-        "Message-Id: <B27397-0100000@Blurdybloop.COM>"
+        "Message-Id: <%d@Blurdybloop.COM>"
         "MIME-Version: 1.0"
         "Content-Type: TEXT/PLAIN; CHARSET=US-ASCII"
         ""
         "Hello Joe, do you think we can meet at 3:30 tomorrow?"
-    } "\r\n" join ;
+    } "\r\n" join vsprintf ;
+
+: sample-mail ( -- mail )
+    "Fred Foobar <foobar@Blurdybloop.COM>" make-mail ;
 
 [ t ] [
     host <imap4ssl> duplex-stream?
@@ -58,7 +63,9 @@ SYMBOLS: email password ;
     host <imap4ssl> dup [ email get password get login drop ] with-stream* ;
 
 [ f ] [
-    host <imap4ssl> [ email get password get login ] with-stream empty?
+    host <imap4ssl> [
+        email get password get login
+    ] with-stream empty?
 ] unit-test
 
 [ f ] [
@@ -157,12 +164,11 @@ SYMBOLS: email password ;
 ! Append mail with a seen flag
 [ ] [
     imap-login [
-        "örjan"
-        {
+        "örjan" {
             [ create-folder ]
             [ select-folder drop ]
-            [ "(\\Seen)" now sample-mail append-mail ]
-            [ "" now sample-mail append-mail ]
+            [ "(\\Seen)" now sample-mail append-mail drop ]
+            [ "" now sample-mail append-mail drop ]
             [ delete-folder ]
         } cleave
     ] with-stream

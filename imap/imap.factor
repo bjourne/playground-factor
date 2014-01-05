@@ -29,6 +29,9 @@ CONSTANT: IMAP4_SSL_PORT 993
 : >utf7imap4 ( str -- str' )
     utf7imap4 encode >string ;
 
+: comma-list ( numbers -- str )
+    [ number>string ] map "," join ;
+
 : check-status ( ind data -- )
     over "OK" = not [ imap4-error ] [ 2drop ]  if ;
 
@@ -123,5 +126,8 @@ CONSTANT: IMAP4_SSL_PORT 993
     command-response parse-items [ string>number ] map ;
 
 : fetch-mails ( seq<number> data-spec -- texts )
-    [ [ number>string ] map "," join ] dip
-    "UID FETCH %s %s" sprintf "" command-response ;
+    [ comma-list ] dip "UID FETCH %s %s" sprintf "" command-response ;
+
+: copy-mails ( seq<number> mailbox -- )
+    [ comma-list ] dip >utf7imap4 "UID COPY %s \"%s\"" sprintf ""
+    command-response drop ;

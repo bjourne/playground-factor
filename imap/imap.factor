@@ -141,6 +141,9 @@ CONSTANT: IMAP4_SSL_PORT 993
     [ >utf7imap4 ] dip " " join "STATUS \"%s\" (%s)" sprintf
     "" command-response parse-status ;
 
+: close-folder ( -- )
+    "CLOSE" "" command-response drop ;
+
 ! Mail management
 : search-mails ( data-spec str -- uids )
     [ "UID SEARCH CHARSET UTF-8 %s" sprintf ] dip utf8 encode

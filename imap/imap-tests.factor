@@ -87,8 +87,8 @@ SYMBOLS: email password ;
 [ t ] [
     imap-login [
         "INBOX" select-folder drop "ALL" "" search-mails
-        5 sample "(RFC822)" fetch-mails [ string? ] all?
-    ] with-stream
+        5 sample "(RFC822)" fetch-mails
+    ] with-stream [ [ string? ] all? ] [ length 5 = ] bi and
 ] unit-test
 
 ! Subject searching. This test is specific to my account.
@@ -161,15 +161,24 @@ SYMBOLS: email password ;
     ] with-stream empty?
 ] unit-test
 
-! Append mail with a seen flag
 [ ] [
     imap-login [
         "örjan" {
             [ create-folder ]
             [ select-folder drop ]
+            ! Append mail with a seen flag
             [ "(\\Seen)" now sample-mail append-mail drop ]
+            ! And one without
             [ "" now sample-mail append-mail drop ]
             [ delete-folder ]
         } cleave
     ] with-stream
+] unit-test
+
+! Exercise store-mail
+[ t ] [
+    imap-login [
+        "INBOX" select-folder drop "ALL" "" search-mails
+        5 sample "+FLAGS" "(\\Recent)" store-mail
+    ] with-stream length 5 =
 ] unit-test

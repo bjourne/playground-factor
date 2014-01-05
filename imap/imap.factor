@@ -89,13 +89,19 @@ CONSTANT: IMAP4_SSL_PORT 993
     [ f ] [ first first last last string>number ] if-empty ;
 
 ! Returns uid if the server supports the UIDPLUS extension.
-: parse-append ( seq -- uid/f )
+: parse-append-mail ( seq -- uid/f )
     [ "\\[APPENDUID (\\d+) \\d+\\]" pcre:findall ] map harvest
     [ f ] [ first first last last string>number ] if-empty ;
 
 : parse-status ( seq -- assoc )
     first "\\* STATUS \"[^\"]+\" \\(([^\\)]+)\\)" pcre:findall first last last
     " " split 2 group [ string>number ] assoc-map ;
+
+: parse-store-mail ( seq -- assoc )
+    but-last [
+        "\\(FLAGS \\(([^\\)]+)\\) UID (\\d+)\\)" pcre:findall
+        first 1 tail values first2 [ " " split ] dip string>number swap 2array
+    ] map ;
 
 ! Constructor
 : <imap4ssl> ( host -- imap4 )
@@ -141,7 +147,7 @@ CONSTANT: IMAP4_SSL_PORT 993
     command-response parse-items [ string>number ] map ;
 
 : fetch-mails ( message-set data-spec -- texts )
-    [ comma-list ] dip "UID FETCH %s %s" sprintf "" command-response ;
+    [ comma-list ] dip "UID FETCH %s %s" sprintf "" command-response but-last ;
 
 : copy-mails ( message-set mailbox -- )
     [ comma-list ] dip >utf7imap4 "UID COPY %s \"%s\"" sprintf ""
@@ -153,4 +159,8 @@ CONSTANT: IMAP4_SSL_PORT 993
         [ [ "" ] [ " " append ] if-empty ]
         [ timestamp>internal-date ] tri*
         "APPEND \"%s\" %s\"%s\"" sprintf
-    ] dip utf8 encode command-response parse-append ;
+    ] dip utf8 encode command-response parse-append-mail ;
+
+: store-mail ( message-set command flags -- mail-flags )
+    [ comma-list ] 2dip "UID STORE %s %s %s" sprintf "" command-response
+    parse-store-mail ;

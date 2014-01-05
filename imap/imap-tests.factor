@@ -81,7 +81,12 @@ SYMBOLS: email password ;
         "UNSEEN SUBJECT" "week" search-mails
         "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
         empty?
-    ] with-stream or
+        ! Mails since
+        "INBOX" select-folder drop
+        "(SINCE \"01-Jan-2014\")" "" search-mails
+        "BODY.PEEK[HEADER.FIELDS (SUBJECT)]" fetch-mails
+        empty?
+    ] with-stream or or
 ] unit-test
 
 ! Folder management
@@ -96,4 +101,22 @@ SYMBOLS: email password ;
     imap-login [
         "INBOX" { "MESSAGES" "UNSEEN" } status-folder
     ] with-stream [ "MESSAGES" of 0 > ] [ "UNSEEN" of 0 > ] bi and
+] unit-test
+
+! Rename folder
+[ ] [
+    imap-login [
+        "日本語" [ create-folder ] [
+            "ascii-name" [ rename-folder ] [ delete-folder ] bi
+        ] bi
+    ] with-stream
+] unit-test
+
+! Interacting with gmail threads
+[ f ] [
+    imap-login [
+        "INBOX" select-folder drop
+        "SUBJECT" "datetime" search-mails
+        "(UID X-GM-THRID)" fetch-mails
+    ] with-stream empty?
 ] unit-test

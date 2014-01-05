@@ -64,9 +64,6 @@ CONSTANT: IMAP4_SSL_PORT 993
 : command-response ( command literal -- obj )
     "ABCD" [ write-command ] [ read-response ] bi ;
 
-: quote ( str -- str' )
-    "\\" "\\\\" replace "\"" "\\" replace "\"" "\"" surround ;
-
 ! Special parsing
 : parse-items ( seq -- items )
     first " " split 2 tail ;
@@ -94,7 +91,7 @@ CONSTANT: IMAP4_SSL_PORT 993
     "CAPABILITY" "" command-response parse-items ;
 
 : login ( user pass -- caps )
-    quote "LOGIN %s %s" sprintf "" command-response parse-items ;
+    "LOGIN %s \"%s\"" sprintf "" command-response parse-items ;
 
 ! Folder management
 : list-folders ( directory -- folders )
@@ -110,6 +107,10 @@ CONSTANT: IMAP4_SSL_PORT 993
 
 : delete-folder ( mailbox -- )
     >utf7imap4 "DELETE \"%s\"" sprintf "" command-response
+    drop ;
+
+: rename-folder ( old-name new-name -- )
+    [ >utf7imap4 ] bi@ "RENAME \"%s\" \"%s\"" sprintf "" command-response
     drop ;
 
 : status-folder ( mailbox keys -- assoc )

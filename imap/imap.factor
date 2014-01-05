@@ -2,6 +2,7 @@ USING:
     accessors
     arrays
     assocs
+    calendar.format calendar.format.macros
     formatting
     fry
     grouping
@@ -12,7 +13,7 @@ USING:
     io.encodings.utf7
     io.encodings.utf8
     io.sockets io.sockets.secure
-    io.streams.duplex
+    io.streams.duplex io.streams.string
     kernel
     math.parser
     sequences
@@ -25,6 +26,14 @@ ERROR: imap4-error ind data ;
 
 CONSTANT: IMAP4_PORT     143
 CONSTANT: IMAP4_SSL_PORT 993
+
+! Converts a timestamp to the format imap4 expects. Timezone
+! information should be appended to the resulting string but I don't
+! know how to do that.
+: timestamp>internal-date ( timestamp -- str )
+    [
+        { DD "-" MONTH "-" YYYY " " hh ":" mm ":" ss } formatted
+    ] with-string-writer ;
 
 : >utf7imap4 ( str -- str' )
     utf7imap4 encode >string ;
@@ -131,3 +140,11 @@ CONSTANT: IMAP4_SSL_PORT 993
 : copy-mails ( seq<number> mailbox -- )
     [ comma-list ] dip >utf7imap4 "UID COPY %s \"%s\"" sprintf ""
     command-response drop ;
+
+: append-mail ( mailbox flags date-time mail -- )
+    [
+        [ >utf7imap4 ]
+        [ [ "" ] [ " " append ] if-empty ]
+        [ timestamp>internal-date ] tri*
+        "APPEND \"%s\" %s\"%s\"" sprintf
+    ] dip utf8 encode command-response drop ;

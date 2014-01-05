@@ -2,11 +2,13 @@ USING:
     accessors
     arrays
     assocs
+    calendar
+    combinators
     continuations
     imap
     io.streams.duplex
     kernel
-    math
+    math math.statistics
     namespaces
     pcre
     random
@@ -19,6 +21,19 @@ IN: imap.tests
 ! Set these to your email account.
 CONSTANT: host "imap.gmail.com"
 SYMBOLS: email password ;
+
+: sample-mail ( -- mail )
+    {
+        "Date: Mon, 7 Feb 1994 21:52:52 -0800 (PST)"
+        "From: Fred Foobar <foobar@Blurdybloop.COM>"
+        "Subject: afternoon meeting"
+        "To: mooch@owatagu.siam.edu"
+        "Message-Id: <B27397-0100000@Blurdybloop.COM>"
+        "MIME-Version: 1.0"
+        "Content-Type: TEXT/PLAIN; CHARSET=US-ASCII"
+        ""
+        "Hello Joe, do you think we can meet at 3:30 tomorrow?"
+    } "\r\n" join ;
 
 [ t ] [
     host <imap4ssl> duplex-stream?
@@ -112,6 +127,24 @@ SYMBOLS: email password ;
     ] with-stream
 ] unit-test
 
+! Create a folder hierarchy
+[ t ] [
+    imap-login [
+        "*" list-folders length
+        "foo/bar/baz/日本語" [
+            create-folder "*" list-folders length 4 - =
+        ] [ delete-folder ] bi
+    ]  with-stream
+] unit-test
+
+! A gmail compliant way of creating a folder hierarchy.
+[ ] [
+    imap-login [
+        "foo/bar/baz/boo" "/" split { } [ suffix ] cum-map [ "/" join ] map
+        [ [ create-folder ] each ] [ [ delete-folder ] each ] bi
+    ] with-stream
+] unit-test
+
 ! Interacting with gmail threads
 [ f ] [
     imap-login [
@@ -119,4 +152,18 @@ SYMBOLS: email password ;
         "SUBJECT" "datetime" search-mails
         "(UID X-GM-THRID)" fetch-mails
     ] with-stream empty?
+] unit-test
+
+! Append mail with a seen flag
+[ ] [
+    imap-login [
+        "örjan"
+        {
+            [ create-folder ]
+            [ select-folder drop ]
+            [ "(\\Seen)" now sample-mail append-mail ]
+            [ "" now sample-mail append-mail ]
+            [ delete-folder ]
+        } cleave
+    ] with-stream
 ] unit-test

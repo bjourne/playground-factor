@@ -1,5 +1,4 @@
 USING:
-    arrays
     formatting fry
     grouping
     kernel
@@ -8,9 +7,7 @@ USING:
     sequences sets ;
 IN: xkcd1313
 
-CONSTANT: regexp
-    "bu|[rn]t|[coy]e|[mtg]a|j|iso|n[hl]|[ae]d|lev|sh|[lnd]i|[po]o|ls"
-
+! ------------------------------------------------------------------------------
 : name-set ( str -- set )
     "\\s" split members ;
 
@@ -31,19 +28,17 @@ stevenson stevenson nixon goldwater humphrey mcgovern ford carter mondale
 dukakis bush dole gore kerry mccain romney" name-set winners diff
     { "fremont" } diff "fillmore" suffix ;
 
-: print-errors ( names fmt -- )
-    '[ ", " join _ printf ] unless-empty ; inline
+: drugs ( -- set )
+    "lipitor nexium plavix advair ablify seroquel singulair crestor actos epogen"
+    name-set ;
 
-: verify-winners ( winners regex -- misses )
-    '[ _ findall empty? ] filter
-    dup "Error: should match but did not: %s\n" print-errors ;
+: cities ( -- set )
+    "paris trinidad capetown riga zurich shanghai vancouver chicago adelaide auckland"
+    name-set ;
 
-: verify-losers ( losers regex -- misses )
-    '[ _ findall empty? not ] filter
-    dup "Error: should not match but did: %s\n" print-errors ;
-
-: verify ( winners losers regex -- ? )
-    [ verify-losers swap ] [ verify-winners ] bi [ empty? ] both? ;
+! ------------------------------------------------------------------------------
+: matches ( seq regex -- seq' )
+    '[ _ findall empty? not ] filter ;
 
 : mconcat ( seq quot -- set )
     map concat members ; inline
@@ -54,23 +49,37 @@ dukakis bush dole gore kerry mccain romney" name-set winners diff
 : subparts ( str -- seq )
     1 4 [a,b] [ clump ] with mconcat ;
 
-: matches ( regex seq -- seq )
-    [ swap findall empty? not ] with filter ;
-
 : candidate-components ( winners losers -- seq )
     [
         [ [ "^%s$" sprintf ] map ]
-        [ [ subparts ] mconcat [ dotify ] mconcat ] bi
-    ]
-    [ '[ _ matches empty? ] ] bi* filter append ;
+        [ [ subparts ] mconcat [ dotify ] mconcat ] bi append
+    ] dip swap [ matches empty? ] with filter ;
 
-: score-candidate ( regex winners -- n )
-    dupd matches length 3 * swap length - ;
-
-: find-cover ( cover candidates winners -- cover' )
-    [ 2drop { } ] [
-        dupd '[ _ score-candidate ] supremum-by swap remove nip
+: find-cover ( winners candidates -- cover )
+    swap [ drop { } ] [
+        2dup '[ _ over matches length 3 * swap length - ] supremum-by [
+            [ dupd matches diff ] [ rot remove ] bi find-cover
+        ] keep prefix
     ] if-empty ;
 
-: find-regex ( winners losers -- ? )
-    dupd candidate-components { } -rot swap find-cover ;
+: find-regex ( winners losers -- regex )
+    dupd candidate-components find-cover "|" join ;
+
+: verify ( winners losers regex -- ? )
+    swap over [
+        dupd matches diff "Error: should match but did not: %s\n"
+    ] [
+        matches "Error: should not match but did: %s\n"
+    ] 2bi* [
+        dupd '[ ", " join _ printf ] unless-empty empty?
+    ] 2bi@ and ;
+
+: print-stats ( legend winners regex -- )
+    dup length rot "|" join length over /
+    "separating %s: '%s' (%d chars %.1f ratio)\n" printf ;
+
+: (find-both) ( winners losers legend -- )
+    -rot 2dup find-regex [ verify t assert= ] 3keep nip print-stats ;
+
+: find-both ( winners losers -- )
+    [ "1 from 2" (find-both) ] [ swap "2 from 1" (find-both) ] 2bi ;

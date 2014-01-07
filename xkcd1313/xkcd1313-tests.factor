@@ -19,8 +19,8 @@ IN: xkcd1313.tests
 ] unit-test
 
 [ { "a" "b" "c" } { "any" "bee" "succeed" } ] [
-    "a|b|c" { "a" "b" "c" "d" "e" } matches
-    "a|b|c" { "any" "bee" "succeed" "dee" "eee!" } matches
+    { "a" "b" "c" "d" "e" } { "any" "bee" "succeed" "dee" "eee!" }
+    [ "a|b|c"  matches ] bi@
 ] unit-test
 
 [ t ] [

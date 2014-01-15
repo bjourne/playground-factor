@@ -7,6 +7,7 @@ USING:
     continuations
     formatting
     fry
+    grouping.extras
     imap
     io.streams.duplex
     kernel
@@ -16,6 +17,7 @@ USING:
     random
     sequences
     sets
+    sorting
     strings
     tools.test ;
 IN: imap.tests
@@ -187,3 +189,14 @@ SYMBOLS: email host password ;
         5 sample "+FLAGS" "(\\Recent)" store-mail
     ] with-stream length 5 =
 ] unit-test
+
+! Just an interesting verb to gmail thread mails. Wonder if you can
+! avoid the double fetch-mails?
+: threaded-mailbox ( uids -- threads )
+    [
+        "(X-GM-THRID)" fetch-mails [
+            "\\d+" findall [ first last string>number
+            ] map
+        ] map
+    ] [ "(BODY[HEADER.FIELDS (SUBJECT)])" fetch-mails ] bi zip
+    [ first first ] [ sort-with ] [ group-by ] bi ;

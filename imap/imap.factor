@@ -27,12 +27,14 @@ ERROR: imap4-error ind data ;
 CONSTANT: IMAP4_PORT     143
 CONSTANT: IMAP4_SSL_PORT 993
 
-! Converts a timestamp to the format imap4 expects. Timezone
-! information should be appended to the resulting string but I don't
-! know how to do that.
+! write-gmt-offset writes GMT instead of +0000 if the utc offset is
+! 00:00. That's perhaps not correct, I don't know.
 : timestamp>internal-date ( timestamp -- str )
     [
-        { DD "-" MONTH "-" YYYY " " hh ":" mm ":" ss } formatted
+        {
+            DD "-" MONTH "-" YYYY " " hh ":" mm ":" ss " "
+            [ gmt-offset>> write-gmt-offset ]
+        } formatted
     ] with-string-writer ;
 
 : >utf7imap4 ( str -- str' )

@@ -120,6 +120,15 @@ SYMBOLS: email host password ;
     ] with-stream
 ] unit-test
 
+! Fetch only headers
+[ ] [
+    imap-login [
+        "INBOX" select-folder drop
+        "ALL" "" search-mails
+        10 head "(BODY[HEADER.FIELDS (SUBJECT FROM)])" fetch-mails drop
+    ] with-stream
+] unit-test
+
 ! Stat folder
 [ t ] [
     imap-login [

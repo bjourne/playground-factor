@@ -47,7 +47,12 @@ SYMBOLS: email host password ;
 
 ! Fails unless you have set the settings.
 : imap-login ( -- imap4 )
-    host get <imap4ssl> dup [ email get password get login drop ] with-stream* ;
+    host get <imap4ssl> dup [
+        email get password get login drop
+    ] with-stream* ;
+
+: imap-test ( result quot -- )
+    '[ imap-login _ with-stream ] unit-test ; inline
 
 [ t ] [
     host get <imap4ssl> duplex-stream?
@@ -75,120 +80,98 @@ SYMBOLS: email host password ;
 
 ! Newly created and then selected folder is empty.
 [ 0 { } ] [
-    imap-login [
-        10 random-ascii
-        [ create-folder ]
-        [ select-folder ]
-        [ delete-folder ] tri
-        "ALL" "" search-mails
-    ] with-stream
-] unit-test
+    10 random-ascii
+    [ create-folder ]
+    [ select-folder ]
+    [ delete-folder ] tri
+    "ALL" "" search-mails
+] imap-test
 
 ! Create delete select again.
 [ 0 ] [
-    imap-login [
-        "örjan" [ create-folder ] [ select-folder ] [ delete-folder ] tri
-    ] with-stream
-] unit-test
+    "örjan" [ create-folder ] [ select-folder ] [ delete-folder ] tri
+] imap-test
 
 ! Test list folders
 [ t ] [
-    imap-login [
-        10 random-ascii
-        [ create-folder "*" list-folders length 0 > ] [ delete-folder ] bi
-    ] with-stream
-] unit-test
+    10 random-ascii
+    [ create-folder "*" list-folders length 0 > ] [ delete-folder ] bi
+] imap-test
 
 ! Generate some mails for searching
 [ t t f f ] [
-    imap-login [
-        10 random-ascii
-        {
-            [ create-folder ]
-            [
-                '[ _ "(\\Seen)" now sample-mail append-mail drop ]
-                10 swap times
-            ]
-            [
-                select-folder drop
-                "ALL" "" search-mails
-                5 sample "(RFC822)" fetch-mails
-                [ [ string? ] all? ] [ length 5 = ] bi
-                "SUBJECT" "afternoon" search-mails empty?
-                "(SINCE \"01-Jan-2014\")" "" search-mails empty?
-            ]
-            [ delete-folder ]
-        } cleave
-    ] with-stream
-] unit-test
+    10 random-ascii {
+        [ create-folder ]
+        [
+            '[ _ "(\\Seen)" now sample-mail append-mail drop ]
+            10 swap times
+        ]
+        [
+            select-folder drop
+            "ALL" "" search-mails
+            5 sample "(RFC822)" fetch-mails
+            [ [ string? ] all? ] [ length 5 = ] bi
+            "SUBJECT" "afternoon" search-mails empty?
+            "(SINCE \"01-Jan-2014\")" "" search-mails empty?
+        ]
+        [ delete-folder ]
+    } cleave
+] imap-test
 
 ! Stat folder
 [ t ] [
-    imap-login [
-        10 random-ascii
-        {
-            [ create-folder ]
-            [
-                '[ _ "(\\Seen)" now sample-mail append-mail drop ]
-                10 swap times
-            ]
-            [
-                { "MESSAGES" "UNSEEN" } status-folder
-                [ "MESSAGES" of 0 > ] [ "UNSEEN" of 0 >= ] bi and
-            ]
-            [ delete-folder ]
-        } cleave
-    ] with-stream
-] unit-test
+    10 random-ascii {
+        [ create-folder ]
+        [
+            '[ _ "(\\Seen)" now sample-mail append-mail drop ]
+            10 swap times
+        ]
+        [
+            { "MESSAGES" "UNSEEN" } status-folder
+            [ "MESSAGES" of 0 > ] [ "UNSEEN" of 0 >= ] bi and
+        ]
+        [ delete-folder ]
+    } cleave
+] imap-test
 
 ! Rename folder
 [ ] [
-    imap-login [
-        "日本語" [ create-folder ] [
-            "ascii-name" [ rename-folder ] [ delete-folder ] bi
-        ] bi
-    ] with-stream
-] unit-test
+    "日本語" [ create-folder ] [
+        "ascii-name" [ rename-folder ] [ delete-folder ] bi
+    ] bi
+] imap-test
 
 ! Create a folder hierarchy
 [ t ] [
-    imap-login [
-        "*" list-folders length
-        "foo/bar/baz/日本語" [
-            create-folder "*" list-folders length 4 - =
-        ] [ delete-folder ] bi
-    ]  with-stream
-] unit-test
+    "*" list-folders length
+    "foo/bar/baz/日本語" [
+        create-folder "*" list-folders length 4 - =
+    ] [ delete-folder ] bi
+] imap-test
 
 ! A gmail compliant way of creating a folder hierarchy.
 [ ] [
-    imap-login [
-        "foo/bar/baz/boo" "/" split { } [ suffix ] cum-map [ "/" join ] map
-        [ [ create-folder ] each ] [ [ delete-folder ] each ] bi
-    ] with-stream
-] unit-test
+    "foo/bar/baz/boo" "/" split { } [ suffix ] cum-map [ "/" join ] map
+    [ [ create-folder ] each ] [ [ delete-folder ] each ] bi
+] imap-test
 
 [ ] [
-    imap-login [
-        "örjan" {
-            [ create-folder ]
-            [ select-folder drop ]
-            ! Append mail with a seen flag
-            [ "(\\Seen)" now sample-mail append-mail drop ]
-            ! And one without
-            [ "" now sample-mail append-mail drop ]
-            [ delete-folder ]
-        } cleave
-    ] with-stream
-] unit-test
+    "örjan" {
+        [ create-folder ]
+        [ select-folder drop ]
+        ! Append mail with a seen flag
+        [ "(\\Seen)" now sample-mail append-mail drop ]
+        ! And one without
+        [ "" now sample-mail append-mail drop ]
+        [ delete-folder ]
+    } cleave
+] imap-test
 
 ! Exercise store-mail
-[ t ] [
-    imap-login [
-        "INBOX" select-folder drop "ALL" "" search-mails
-        5 sample "+FLAGS" "(\\Recent)" store-mail
-    ] with-stream length 5 =
-] unit-test
+[ 5 ] [
+    "INBOX" select-folder drop "ALL" "" search-mails
+    5 sample "+FLAGS" "(\\Recent)" store-mail length
+] imap-test
 
 ! Just an interesting verb to gmail thread mails. Wonder if you can
 ! avoid the double fetch-mails?

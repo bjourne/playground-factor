@@ -173,6 +173,24 @@ SYMBOLS: email host password ;
     5 sample "+FLAGS" "(\\Recent)" store-mail length
 ] imap-test
 
+! Internal date parsing
+[ "Mon, 19 Aug 2013 23:16:36 GMT" ] [
+    "19-Aug-2013 23:16:36 +0000" internal-date>timestamp timestamp>rfc822
+] unit-test
+
+[ "19-Aug-2014 23:16:36 GMT" ] [
+    "Mon, 19 Aug 2014 23:16:36 GMT" rfc822>timestamp timestamp>internal-date
+] unit-test
+
+! Test parsing an INTERNALDATE from a real mail.
+[ t ] [
+    "INBOX" select-folder drop
+    "ALL" "" search-mails
+    "(INTERNALDATE)" fetch-mails first
+    "\"([^\"]+)\"" findall first second last
+    internal-date>timestamp timestamp?
+] imap-test
+
 ! Just an interesting verb to gmail thread mails. Wonder if you can
 ! avoid the double fetch-mails?
 : threaded-mailbox ( uids -- threads )

@@ -2,7 +2,7 @@ USING:
     accessors
     arrays
     assocs
-    calendar.format calendar.format.macros
+    calendar calendar.format calendar.format.macros
     formatting
     fry
     grouping
@@ -15,7 +15,7 @@ USING:
     io.sockets io.sockets.secure
     io.streams.duplex io.streams.string
     kernel
-    math.parser
+    math math.parser
     sequences
     splitting
     strings ;
@@ -32,8 +32,23 @@ CONSTANT: IMAP4_SSL_PORT 993
 ! know how to do that.
 : timestamp>internal-date ( timestamp -- str )
     [
-        { DD "-" MONTH "-" YYYY " " hh ":" mm ":" ss } formatted
+
+        {
+            DD "-" MONTH "-" YYYY " "
+            hh ":" mm ":" ss " "
+            [ gmt-offset>> write-gmt-offset ]
+        } formatted
     ] with-string-writer ;
+
+: internal-date>timestamp ( str -- timestamp )
+    [
+        ! Date, month, year.
+        "-" read-token checked-number
+        "-" read-token month-abbreviations index 1 +
+        read-sp checked-number -rot swap
+        ! Hour, minute second and gmt offset.
+        read-hms " " expect readln parse-rfc822-gmt-offset <timestamp>
+    ] with-string-reader  ;
 
 : >utf7imap4 ( str -- str' )
     utf7imap4 encode >string ;

@@ -18,6 +18,10 @@ CONSTANT: shortcut-areas
                 { key "^" }
                 { desc "visit the parent directory" }
              }
+             T{ shortcut
+                 { key "+" }
+                 { desc "create directory" }
+             }
          }
        }
     }

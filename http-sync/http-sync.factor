@@ -1,46 +1,29 @@
 USING:
     accessors assocs
-    ascii
-    calendar http.client
-    io.directories
-    io.encodings.utf8
-    io.files
-    io.pathnames
+    calendar
+    http-sync.syncitem http-sync.urlvars http-sync.utils
     kernel
     logging
-    math.order
+    math
     namespaces
     sequences
-    unicode.normalize ;
+    threads ;
 IN: http-sync
 
-TUPLE: sync-item url poll-interval last-poll ;
-
-: poll-needed? ( sync-item -- ? )
-    [ poll-interval>> ] [ last-poll>> ] bi
-    [ swap seconds time+ now <=> +lt+ = ] [ drop t ] if* ;
-
 SYMBOLS: user-agent ;
+CONSTANT: tick-seconds 5
+SYMBOL: parse-variables
 
-! : http-get* ( url -- data )
-!     <get-request> [ header>> user-agent get "user-agent" rot set-at ] keep
-!     http-request swap check-response drop ;
+: check-syncitem ( syncitem -- syncitem' )
+    parse-variables get
+    [ over url-format>> interpolate-string >>real-url poll-url ] keep
+    assoc-union parse-variables set ;
 
+: main-recursive ( syncitems times -- )
+    [ [ check-syncitem ] map ] dip 1 -
+    [ drop ] [ tick-seconds seconds sleep main-recursive ] if-zero ;
+\ main-recursive NOTICE add-input-logging
 
-
-: slugify ( str -- str' )
-    nfd >lower [ dup alpha? [ drop CHAR: - ] unless ] map ;
-
-: download-to-dir ( url dir -- )
-    over slugify append-path download-to ;
-
-: fetch-url ( dir url-def -- )
-    swap download-to-dir ;
-\ fetch-url NOTICE add-input-logging
-
-: run-loop ( local-dir url-defs -- )
-    [ dup make-directories ] dip [ fetch-url ] with each ;
-\ run-loop NOTICE add-input-logging
-
-: run-wrapper ( local-dir url-defs -- )
-    "http-sync" [ run-loop ] with-logging ;
+: main ( syncitems times -- )
+    time-variables parse-variables set main-recursive ;
+\ main NOTICE add-input-logging

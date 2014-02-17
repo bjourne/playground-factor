@@ -43,7 +43,6 @@ M: syncitem present
     [ swap time+ now <=> +lt+ = ] [ drop t ] if* ;
 
 : refresh-content ( syncitem -- syncitem' equal )
-    ! dup present \ refresh-content NOTICE log-message
     dup [ real-url>> http-get* dup content-hash dup ]
     [ content-hash>> ] bi =
     [ swapd >>content-hash swap >>content now >>last-poll ] dip ;
@@ -53,7 +52,6 @@ M: syncitem present
     dup quot>> call( syncitem -- vars ) ;
 
 : poll-url ( syncitem -- syncitem' vars )
-    dup present \ poll-url NOTICE log-message
     dup [ poll-interval>> seconds ] [ last-poll>> ] bi poll-needed? [
         refresh-content [ { } ] [ dup invoke-callback ] if
     ] [ { } ] if ;

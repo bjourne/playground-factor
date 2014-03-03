@@ -37,6 +37,15 @@ CONSTANT: shortcut-areas
        }
     }
     T{ area
+       { name "comint-mode" }
+       { shortcuts
+         T{ shortcut
+            { key "C-c C-l" }
+            { desc "list all history items for the current buffer" }
+         }
+       }
+    }
+    T{ area
        { name "fuel-listener-mode" }
        { shortcuts
          T{ shortcut
@@ -139,7 +148,6 @@ CONSTANT: shortcut-areas
              T{ shortcut
                 { key "C-c C-f" }
                 { desc "insert end tag for element containing point" }
->>>>>>> 54e52497eaec47a111a2db48278cdb5382bee86d
              }
          }
        }

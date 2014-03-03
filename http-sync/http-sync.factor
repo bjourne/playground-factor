@@ -24,6 +24,7 @@ SYMBOL: parse-variables
     [ drop ] [ tick-seconds seconds sleep main-recursive ] if-zero ;
 \ main-recursive NOTICE add-input-logging
 
+! Not a good name
 : main ( syncitems times -- )
     time-variables parse-variables set main-recursive ;
 \ main NOTICE add-input-logging

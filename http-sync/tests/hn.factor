@@ -2,8 +2,8 @@
 ! csv. Due to hn's cdn, you won't get *all* comments but it doesn't
 ! matter.
 USING: accessors arrays html.parser html.parser.analyzer http-sync
-http-sync.syncitem http-sync.utils http-sync.tests.csvstorage kernel logging
-sequences threads ;
+http-sync.syncitem http-sync.utils http-sync.tests.csvstorage io.sockets.secure
+kernel logging sequences threads ;
 IN: http-sync.tests.hn
 
 : parse-headers ( vector -- name link )
@@ -31,5 +31,11 @@ IN: http-sync.tests.hn
     "https://news.ycombinator.com/newcomments" 30 [ new-content-cb ]
     <syncitem> 1array ;
 
-: run-hn-scraper ( -- thread )
-    [ hn-items "hn" [ 10000 main ] with-logging ] "hn-scraper" spawn ;
+: run-hn-scraper ( -- )
+    hn-items "hn" [ 10000 main ] with-logging ;
+
+
+: run-hn-scraper-in-thread ( -- thread )
+    [ run-hn-scraper ] "hn-scraper" spawn ;
+
+MAIN: run-hn-scraper

@@ -28,8 +28,8 @@ IN: http-sync.tests.hn
     content>> parse-comments "/tmp/hn.csv" merge-items { } ;
 
 : hn-items ( -- syncitems )
-    "https://news.ycombinator.com/newcomments" 5 [ new-content-cb ]
+    "https://news.ycombinator.com/newcomments" 30 [ new-content-cb ]
     <syncitem> 1array ;
 
 : run-hn-scraper ( -- thread )
-    [ hn-items "hn" [ 100 main ] with-logging ] "hn-scraper" spawn ;
+    [ hn-items "hn" [ 10000 main ] with-logging ] "hn-scraper" spawn ;

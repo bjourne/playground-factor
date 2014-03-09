@@ -42,8 +42,16 @@ M: syncitem present
 : poll-needed? ( interval last-poll -- ? )
     [ swap time+ now <=> +lt+ = ] [ drop t ] if* ;
 
+: log-download-failed ( url response -- )
+    [ code>> ] [ message>> ] bi "download of %s failed: %d %s" sprintf
+    \ log-download-failed NOTICE log-message ;
+
+: http-get-safe ( url -- content )
+    dup http-get over code>> success?
+    [ 2nip ] [ drop log-download-failed "" ] if ;
+
 : refresh-content ( syncitem -- syncitem' equal )
-    dup [ real-url>> http-get* dup content-hash dup ]
+    dup [ real-url>> http-get-safe dup content-hash dup ]
     [ content-hash>> ] bi =
     [ swapd >>content-hash swap >>content now >>last-poll ] dip ;
 

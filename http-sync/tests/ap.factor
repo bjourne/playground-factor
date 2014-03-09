@@ -24,7 +24,7 @@ IN: http-sync.tests.ap
         "http://hosted2.ap.org/atom/APDEFAULT/3d281c11a96b4ad082fe88aa0db04305"
         "http://hosted2.ap.org/atom/APDEFAULT/386c25518f464186bf7a2ac026580ce7"
         "http://hosted2.ap.org/atom/APDEFAULT/cae69a7523db45408eeb2b3a98c0c9c5"
-    } [ 5 [ new-content-cb ] <syncitem> ] map ;
+    } [ 30 [ new-content-cb ] <syncitem> ] map ;
 
 : run-ap-scraper ( -- thread )
-    [ ap-feeds "ap" [ 10 main ] with-logging ] "ap-scraper" spawn ;
+    [ ap-feeds "ap" [ 10000 main ] with-logging ] "ap-scraper" spawn ;

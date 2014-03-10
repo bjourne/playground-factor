@@ -36,5 +36,8 @@ IN: http-sync.utils
     '[ "class" attribute dup "" ? " " split _ swap member? ]
     find-between-all ;
 
+: html-vector>text ( vector -- text )
+    [ text>> ] map sift " " join ;
+
 : replace-entities ( html-str -- str )
     [ [ string>xml-chunk ] with-html-entities first ] [ drop ] recover ;

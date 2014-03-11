@@ -3,7 +3,6 @@ USING:
     accessors
     arrays
     assocs
-    checksums checksums.md5
     continuations
     fry
     html.parser.analyzer
@@ -23,9 +22,6 @@ IN: http-sync.utils
         [ { } 2array suffix ]
         [ [ unclip-last first2 ] dip suffix 2array suffix ] if
     ] { } swap reduce ; inline
-
-: content-hash ( content -- md5 )
-    md5 checksum-bytes hex-string ;
 
 : interpolate-string ( assoc str -- str' )
     parse-interpolate [

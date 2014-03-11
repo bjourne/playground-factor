@@ -22,9 +22,10 @@ IN: http-sync.tests.hn2
         parse-comment [ -rot ] dip 3array 2array
     ] with map [ first ] filter ;
 
-: parse-link ( vector -- link )
-    "title" find-between-has-class first
-    "a" find-first-name nip "href" attribute ;
+: parse-link ( vector -- link/f )
+    "title" find-between-has-class
+    [ "no title found" \ parse-link NOTICE log-message f ]
+    [ first "a" find-first-name nip "href" attribute ] if-empty ;
 
 : parse-comments-page ( content -- comments )
     parse-html [ parse-link ] keep parse-comments ;
@@ -39,7 +40,7 @@ IN: http-sync.tests.hn2
 
 : top-articles-cb ( item content -- children )
     [ url>> >url ] [ parse-articles ] bi*
-    [ derive-url 30 seconds [ comments-page ] <item> ] with map ;
+    [ derive-url 60 seconds [ comments-page ] <item> ] with map ;
 
 : hn2-items ( -- items )
     "https://news.ycombinator.com/news" 30 seconds [ top-articles-cb ]

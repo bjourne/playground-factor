@@ -14,7 +14,7 @@ USING:
     sequences
     splitting
     xml xml.entities.html ;
-IN: http-sync.utils
+IN: http-sync.tests.utils
 
 : categorize ( seq quot -- assoc )
     '[

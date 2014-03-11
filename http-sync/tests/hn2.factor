@@ -1,5 +1,5 @@
 USING: accessors arrays calendar formatting html.parser html.parser.analyzer
-http-sync.item http-sync.utils http-sync.tests.csvstorage kernel logging math
+http-sync http-sync.tests.utils http-sync.tests.csvstorage kernel logging math
 present sequences urls ;
 IN: http-sync.tests.hn2
 

@@ -18,7 +18,10 @@ IN: http-sync.tests.hn2
     [ parse-headers ] [ parse-body ] bi ;
 
 : parse-comments ( link vector -- comments )
-    "default" find-between-has-class [
+    ! Xpath would have been nice here. The filter removes poll options
+    ! which shares some of the markup of regular comments.
+    "default" find-between-has-class [ second name>> "div" = ] filter
+    [
         parse-comment [ -rot ] dip 3array 2array
     ] with map [ first ] filter ;
 

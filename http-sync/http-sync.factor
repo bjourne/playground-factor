@@ -31,7 +31,7 @@ M: item present
     \ log-download-failed NOTICE log-message ;
 
 : http-get-safe ( url -- content )
-    dup http-get over code>> success?
+    dup http-get* over code>> success?
     [ 2nip ] [ drop log-download-failed "" ] if ;
 \ http-get-safe NOTICE add-input-logging
 

@@ -1,6 +1,6 @@
-USING: accessors arrays assocs calendar calendar.format combinators constructors
-formatting http.client kernel locals logging math math.order namespaces present
-sequences threads urls ;
+USING: accessors arrays assocs calendar calendar.format classes combinators
+constructors continuations formatting http.client io.backend.unix kernel locals
+logging math math.order namespaces present sequences summary threads urls ;
 IN: http-sync
 
 CONSTANT: tick-seconds 5
@@ -26,13 +26,23 @@ M: item present
     [ poll-duration>> ] [ url>> ] bi fetch-cache get at
     [ second time+ now <=> +lt+ = ] [ drop t ] if* ;
 
-: log-download-failed ( url response -- )
-    [ code>> ] [ message>> ] bi "download of %s failed: %d %s" sprintf
-    \ log-download-failed NOTICE log-message ;
+: handle-http-error ( err -- )
+    dup class-of {
+        {
+            \ download-failed [
+                response>> [ code>> ] [ message>> ] bi
+                "download failed: %d %s" sprintf
+                \ handle-http-error NOTICE log-message
+            ]
+        }
+        {
+            \ io-timeout [ summary \ handle-http-error NOTICE log-message ]
+        }
+        [ drop rethrow ]
+    } case ;
 
 : http-get-safe ( url -- content )
-    dup http-get* over code>> success?
-    [ 2nip ] [ drop log-download-failed "" ] if ;
+    [ http-get nip ] [ handle-http-error drop "" ] recover ;
 \ http-get-safe NOTICE add-input-logging
 
 : poll ( item -- content eq? )

@@ -11,7 +11,9 @@ IN: examples.files.tail
 
 : tail-file ( fname -- )
     [
-        dup f <monitor> swap utf8 [
-            seek-input-end emit-changes
-        ] with-file-reader
+        dup f [
+            swap utf8 [
+                seek-input-end emit-changes
+            ] with-file-reader
+        ] with-monitor
     ] with-monitors ;

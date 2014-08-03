@@ -5,6 +5,42 @@ compiler.cfg.instructions formatting fry io io.streams.string kernel math
 math.order prettyprint prettyprint.config sequences sequences.extras ;
 IN: examples.compiler.stack-recorder
 
+! Dummy
+
+USING: combinators.short-circuit compiler compiler.cfg.debugger
+compiler.cfg.linearization generic macros words ;
+
+: scrub-d-insn? ( insn -- ? )
+    { [ gc-map-insn? ] [ gc-map>> scrub-d>> empty? not ] } 1&& ;
+
+: has-gc-map? ( insns -- ? )
+    [ scrub-d-insn? ] any? ;
+
+: word>instructions ( word -- insns )
+    test-regs first linearization-order ;
+
+: regular-word? ( word -- ? )
+    { generic? inline? macro? no-compile? primitive? }
+    [ execute( x -- x ) ] with any? not ;
+
+: short-word? ( word -- ? )
+    word>instructions length 60 < ;
+
+: interesting-word? ( word -- ? )
+    {
+        [ regular-word? ]
+        [
+            word>instructions
+            [ length 10 < ]
+            [ [ instructions>> ] map concat has-gc-map? ] bi and
+        ]
+    } 1&& ;
+
+: ?unless ( ..a default cond false: ( ..a default -- ..b ) -- ..b )
+    [ ] swap ?if ; inline
+
+
+
 ! Utility
 
 ! Compare with the one in yaml
@@ -32,15 +68,6 @@ IN: examples.compiler.stack-recorder
     [ vacant-locations ] [ occupied-locations ] 2bi assoc-union ;
 
 : join-stacks ( stacks -- stack )
-    ! [ clone ] map
-    ! If a stack location is vacant in one branch, it is vacant in the
-    ! merged branch, but it must be occupied in all branches to be
-    ! occupied in the merged branch.
-    ! [ H{ } clone ] [
-    !     [ [ vacant-slots ] map assoc-combine ]
-    !     [ [ occupied-slots ] map assoc-refine ] bi
-    !     assoc-union
-    ! ] if-empty ;
     [ H{ } clone ] [ [ merge-locations ] reduce1 ] if-empty ;
 
 : offset-stack-locations ( stack ofs -- )

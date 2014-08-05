@@ -8,7 +8,7 @@
 ! Note 3: Should dataflow-analysis really visit the same basic block
 ! more than once? Sure if the in-set changes it should.
 !
-! Weird words: (match-all) golden-rainbow, run-test
+! Weird words: (match-all) golden-rainbow, run-test, create-window
 USING: accessors arrays compiler.cfg.dataflow-analysis
 compiler.cfg.instructions compiler.cfg.linearization
 compiler.cfg.registers formatting fry io io.streams.string kernel

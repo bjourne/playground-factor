@@ -3,11 +3,11 @@ examples.compiler.dummy-walker formatting generic kernel macros math sequences
 vocabs words ;
 IN: examples.compiler.dummy-walker.tests
 
-! : log-analyze-word ( word -- )
-!     "analyze-word: %u\n" printf ;
-
 : log-analyze-word ( word -- )
-    drop ;
+    "analyze-word: %u\n" printf ;
+
+! : log-analyze-word ( word -- )
+!     drop ;
 
 : analyze-word ( word -- )
     dup log-analyze-word
@@ -22,7 +22,7 @@ IN: examples.compiler.dummy-walker.tests
     [ execute( x -- x ) ] with any? not ;
 
 : short-word? ( word -- ? )
-    word>blocks length 20 < ;
+    word>blocks length 35 < ;
 
 : testing-words ( -- words )
     all-words [ { [ regular-word? ] [ short-word? ] } 1&& ] filter ;

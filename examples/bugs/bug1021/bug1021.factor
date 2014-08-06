@@ -8,7 +8,7 @@ find-library absolute-path cdecl add-library >>
 
 LIBRARY: factor-ffi-test
 
-FUNCTION: void* openssl_ffi ( void* s, int x ) ;
+FUNCTION: void* bug1021_test_1 ( void* s, int x ) ;
 
 : dummy ( -- ) ;
 
@@ -21,7 +21,7 @@ FUNCTION: void* openssl_ffi ( void* s, int x ) ;
     100 33 <array> swap over
     [
         pick swapd
-        openssl_ffi
+        bug1021_test_1
         ! dummy
         -rot swap 2 fixnum+fast
 
@@ -34,12 +34,14 @@ FUNCTION: void* openssl_ffi ( void* s, int x ) ;
          101 <alien> run-test [ alien-address ] map drop
     ] 2000 iota swap each  ;
 
+! This example doesn't fail unless you apply my pr which empties the
+! nursery because of shadow data.
+FUNCTION: int bug1021_test_2 ( int a, char* b, void* c ) ;
+FUNCTION: void* bug1021_test_3 ( c-string a ) ;
+USING: byte-arrays alien.strings ;
 
+: doit ( a -- d )
+    33 1byte-array "bar" bug1021_test_3 bug1021_test_2 ;
 
-FUNCTION: int test_create_window_ex ( int a, int b, int c ) ;
-FUNCTION: void* test_get_module_handle ( int a ) ;
-
-! If any of the alien calls, then writes the array can disappear. I
-! can't make the bug happen yet but it should be possible. :)
-: my-create-window4 ( a -- b )
-    20 7 <array> "bar" test_get_module_handle test_create_window_ex ;
+: doit-tests ( -- )
+    100000 [ 0 doit 33 assert= ] times ;

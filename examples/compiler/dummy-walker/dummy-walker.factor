@@ -8,7 +8,44 @@
 ! Note 3: Should dataflow-analysis really visit the same basic block
 ! more than once? Sure if the in-set changes it should.
 !
-! Weird words: (match-all) golden-rainbow, run-test, create-window
+! All these words appear to suffer from the "references above the
+! stack not traced" bug:
+!     (gamma-random-float<1)/777
+!     (use-digit)/133
+!     barrett-mu/218
+!     create-window
+!     decimal>ratio/98
+!     golden-rainbow/62
+!     n-digits-primes/181
+!     pareto-random-float/128
+!     power-random-float/201
+!     read-rfc3339-seconds/144
+!     weibull-random-float/215
+!     pareto-random-float
+!     power-random-float
+!     run-test
+!     weibull-random-float
+!     euler056
+!     estimate-cardinality
+!     (storage>n)
+!     find-unit-suffix
+!     reduce-magnitude
+!     d^
+!     decimalize
+!     p-norm
+!     parse-decimal
+!     minkowski-distance
+!     stirling-fact
+!     bits-to-satisfy-error-rate
+!     exponential-index
+!     logspace[a,b)
+!     ramanujan
+!     logspace[a,b]
+!     svg-string>number
+!     digit-groups
+!     (euler255)
+!     exponential-factorial
+!     (mult-order)
 USING: accessors arrays compiler.cfg.dataflow-analysis
 compiler.cfg.instructions compiler.cfg.linearization
 compiler.cfg.registers formatting fry io io.streams.string kernel
@@ -55,17 +92,17 @@ M: insn visit-insn ( state insn -- state' )
     drop ;
 
 ! Logging
-: log-(transfer-set) ( in-set bb -- )
-    2drop ;
-: log-(join-sets) ( sets bb -- )
-    2drop ;
-
 ! : log-(transfer-set) ( in-set bb -- )
-!     [ ] [ block-number ] bi* swap
-!     "(transfer-set): #%s %u\n" printf ;
-
+!     2drop ;
 ! : log-(join-sets) ( sets bb -- )
-!     block-number swap "(join-sets): #%s %u\n" printf ;
+!     2drop ;
+
+: log-(transfer-set) ( in-set bb -- )
+    [ ] [ block-number ] bi* swap
+    "(transfer-set): #%s %u\n" printf ;
+
+: log-(join-sets) ( sets bb -- )
+    block-number swap "(join-sets): #%s %u\n" printf ;
 
 FORWARD-ANALYSIS: dummy-walker
 

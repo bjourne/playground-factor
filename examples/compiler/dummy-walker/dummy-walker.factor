@@ -46,11 +46,12 @@
 !     (euler255)
 !     exponential-factorial
 !     (mult-order)
-USING: accessors arrays compiler.cfg.dataflow-analysis
+USING: accessors arrays classes compiler.cfg.dataflow-analysis
 compiler.cfg.instructions compiler.cfg.linearization
 compiler.cfg.registers formatting fry io io.streams.string kernel
 math sequences sets ;
 IN: examples.compiler.dummy-walker
+QUALIFIED: sets
 
 ! Domain utility
 : register-write ( ds-loc state -- state' )
@@ -61,6 +62,22 @@ IN: examples.compiler.dummy-walker
 
 : read-ok? ( ds-loc state -- ? )
     [ first >= ] [ second in? ] 2bi or ;
+
+! Logging
+: log-(transfer-set) ( in-set bb -- )
+    2drop ;
+: log-(join-sets) ( sets bb -- )
+    2drop ;
+
+! : log-(transfer-set) ( in-set bb -- )
+!     [ ] [ block-number ] bi* swap
+!     "(transfer-set): #%s %u\n" printf ;
+
+! : log-(join-sets) ( sets bb -- )
+!     block-number swap "(join-sets): #%s %u\n" printf ;
+
+: log-visit-insn ( state insn -- )
+    class-of swap "visit-insn: %u %u\n" printf ;
 
 ! visit-insn
 GENERIC: visit-insn ( state insn -- state' )
@@ -86,23 +103,11 @@ M: ##peek visit-insn ( state insn -- state' )
 
 ! After a gc, negative writes have been erased.
 M: gc-map-insn visit-insn ( state insn -- state' )
+    2dup log-visit-insn
     drop first2 [ 0 >= ] filter 2array ;
 
 M: insn visit-insn ( state insn -- state' )
     drop ;
-
-! Logging
-! : log-(transfer-set) ( in-set bb -- )
-!     2drop ;
-! : log-(join-sets) ( sets bb -- )
-!     2drop ;
-
-: log-(transfer-set) ( in-set bb -- )
-    [ ] [ block-number ] bi* swap
-    "(transfer-set): #%s %u\n" printf ;
-
-: log-(join-sets) ( sets bb -- )
-    block-number swap "(join-sets): #%s %u\n" printf ;
 
 FORWARD-ANALYSIS: dummy-walker
 
@@ -123,7 +128,7 @@ FORWARD-ANALYSIS: dummy-walker
     dupd log-(join-sets) join-states ;
 
 M: dummy-walker-analysis transfer-set ( in-set bb dfa -- out-set )
-    drop (transfer-set) first2 members 2array ;
+    drop (transfer-set) first2 sets:members 2array ;
 
 M: dummy-walker-analysis ignore-block? ( bb dfa -- ? )
     2drop f ;

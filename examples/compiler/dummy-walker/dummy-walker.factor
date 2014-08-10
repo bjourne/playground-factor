@@ -46,10 +46,28 @@
 !     (euler255)
 !     exponential-factorial
 !     (mult-order)
-USING: accessors arrays classes compiler.cfg.dataflow-analysis
+!
+! This is a list of words in which uninitialized.factor wrongly claims
+! initialized stack locations are uninitialized.
+!
+!     <product-sequence>
+!     fork-process
+!     models.range:<range>
+!     visit-derived-root
+!     ...
+!
+! The bug appears to be caused by instruction sequences like this:
+!
+!     ##inc-d -3
+!     ... do stuff
+!     ##inc-d 3
+!
+! Unitialized.factor will think 3 locations are unallocated, but they
+! are not.
+USING: accessors arrays byte-arrays classes compiler.cfg.dataflow-analysis
 compiler.cfg.instructions compiler.cfg.linearization
 compiler.cfg.registers formatting fry io io.streams.string kernel
-math sequences sets ;
+math math.order sequences sets ;
 IN: examples.compiler.dummy-walker
 QUALIFIED: sets
 
@@ -76,8 +94,19 @@ QUALIFIED: sets
 ! : log-(join-sets) ( sets bb -- )
 !     block-number swap "(join-sets): #%s %u\n" printf ;
 
-: log-visit-insn ( state insn -- )
-    class-of swap "visit-insn: %u %u\n" printf ;
+: state>uninitialized ( state -- seq )
+    first2 [ 0 max iota ] dip diff ;
+
+: uninitialized>bitmap ( seq -- ba )
+    [ B{ } ] [
+        dup supremum 1 + 1 <array>
+        [ '[ _ 0 -rot set-nth ] each ] keep >byte-array
+    ] if-empty ;
+
+: log-gc-map-insn ( state insn -- )
+    [ class-of ] [ gc-map>> scrub-d>> ] bi rot
+    state>uninitialized uninitialized>bitmap
+    "%u: expected %u has %u\n" printf ;
 
 ! visit-insn
 GENERIC: visit-insn ( state insn -- state' )
@@ -103,7 +132,7 @@ M: ##peek visit-insn ( state insn -- state' )
 
 ! After a gc, negative writes have been erased.
 M: gc-map-insn visit-insn ( state insn -- state' )
-    2dup log-visit-insn
+    2dup log-gc-map-insn
     drop first2 [ 0 >= ] filter 2array ;
 
 M: insn visit-insn ( state insn -- state' )

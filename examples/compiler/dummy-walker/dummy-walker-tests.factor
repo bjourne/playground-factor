@@ -5,11 +5,11 @@ examples.compiler.dummy-walker continuations formatting generic kernel macros
 math sequences sorting stack-checker.errors tools.test vectors vocabs words ;
 IN: examples.compiler.dummy-walker.tests
 
-! : log-analyze-word ( word -- )
-!     "analyze-word: %u\n" printf ;
-
 : log-analyze-word ( word -- )
-    drop ;
+    "analyze-word: %u\n" printf ;
+
+! : log-analyze-word ( word -- )
+!     drop ;
 
 : analyze-word ( word -- )
     dup log-analyze-word
@@ -26,8 +26,9 @@ IN: examples.compiler.dummy-walker.tests
     { generic? inline? macro? no-compile? primitive? }
     [ execute( x -- x ) ] with any? not ;
 
+! Linux: load-all words up to 60 are ok.
 : short-word? ( word -- ? )
-    [ word-size 30 < ] [
+    [ word-size 15 < ] [
         nip dup do-not-compile? [ drop f ] [ throw ] if
     ] recover ;
 
@@ -38,10 +39,13 @@ IN: examples.compiler.dummy-walker.tests
     [ [ analyze-word f ] [ 2drop t ] recover ] filter ;
 
 : scrub-d-insn? ( insn -- ? )
-    { [ gc-map-insn? ] [ gc-map>> scrub-d>> length 3 >= ] } 1&& ;
+    { [ gc-map-insn? ] [ gc-map>> scrub-d>> length 2 >= ] } 1&& ;
 
 : has-gc-map? ( insns -- ? )
     [ scrub-d-insn? ] any? ;
+
+: word-has-gc-map? ( word -- ? )
+    word>blocks [ instructions>> ] map concat has-gc-map? ;
 
 ! Utils
 : create-block ( insns n -- bb )
@@ -94,7 +98,7 @@ IN: examples.compiler.dummy-walker.tests
 [
     V{
         T{ ##replace { src 10 } { loc D -1 } }
-        T{ ##alien-invoke }
+        T{ ##alien-invoke { gc-map T{ gc-map { scrub-d B{ } } } } }
         T{ ##peek { dst 0 } { loc D -1 } }
     } create-cfg
     compute-dummy-walker-sets
@@ -104,7 +108,7 @@ IN: examples.compiler.dummy-walker.tests
 { { -1 { -1 } } } [
     V{
         T{ ##replace { src 10 } { loc D 0 } }
-        T{ ##alien-invoke }
+        T{ ##alien-invoke { gc-map T{ gc-map { scrub-d B{ } } } } }
         T{ ##inc-d f -1 }
         T{ ##peek { dst 0 } { loc D -1 } }
     } create-cfg output-stack-map
@@ -114,7 +118,7 @@ IN: examples.compiler.dummy-walker.tests
 [
     V{
         T{ ##inc-d f 1 }
-        T{ ##alien-invoke }
+        T{ ##alien-invoke { gc-map T{ gc-map { scrub-d B{ } } } } }
         T{ ##peek { dst 0 } { loc D 0 } }
     } create-cfg
     compute-dummy-walker-sets
@@ -222,7 +226,7 @@ IN: examples.compiler.dummy-walker.tests
 
                 T{ ##inc-d f -3 }
                 T{ ##peek { dst 0 } { loc D -3 } }
-                T{ ##alien-invoke }
+                T{ ##alien-invoke { gc-map T{ gc-map { scrub-d B{ } } } } }
             }
         }
     } [ over create-block ] assoc-map dup

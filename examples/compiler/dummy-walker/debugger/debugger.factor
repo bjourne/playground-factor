@@ -98,7 +98,7 @@ IN: examples.compiler.dummy-walker.debugger
     [ execute( x -- x ) ] with any? not ;
 
 : short-word? ( word -- ? )
-    [ word-length 20 < ] [
+    [ word-length 2000 < ] [
         nip dup do-not-compile? [ drop f ] [ throw ] if
     ] recover ;
 

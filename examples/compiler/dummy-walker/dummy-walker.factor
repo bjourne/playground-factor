@@ -1,69 +1,3 @@
-! Note 1: The walk is as expected, but the stupid block numbers have
-! to be reinitialized for regs. to match.
-!
-! Note 2: It appears that a basic blocks initial stack height might
-! *differ* depending on what path trough the cfg execution took. No
-! idea if that's bad.
-!
-! Note 3: Should dataflow-analysis really visit the same basic block
-! more than once? Sure if the in-set changes it should.
-!
-! All these words appear to suffer from the "references above the
-! stack not traced" bug:
-!     (gamma-random-float<1)/777
-!     (use-digit)/133
-!     barrett-mu/218
-!     create-window
-!     decimal>ratio/98
-!     golden-rainbow/62
-!     n-digits-primes/181
-!     pareto-random-float/128
-!     power-random-float/201
-!     read-rfc3339-seconds/144
-!     weibull-random-float/215
-!     pareto-random-float
-!     power-random-float
-!     run-test
-!     weibull-random-float
-!     euler056
-!     estimate-cardinality
-!     (storage>n)
-!     find-unit-suffix
-!     reduce-magnitude
-!     d^
-!     decimalize
-!     p-norm
-!     parse-decimal
-!     minkowski-distance
-!     stirling-fact
-!     bits-to-satisfy-error-rate
-!     exponential-index
-!     logspace[a,b)
-!     ramanujan
-!     logspace[a,b]
-!     svg-string>number
-!     digit-groups
-!     (euler255)
-!     exponential-factorial
-!     (mult-order)
-!
-! This is a list of words in which uninitialized.factor wrongly claims
-! initialized stack locations are uninitialized.
-!
-!     <product-sequence>
-!     fork-process
-!     models.range:<range>
-!     visit-derived-root
-!     ...
-!
-! The bug appears to be caused by instruction sequences like this:
-!
-!     ##inc-d -3
-!     ... do stuff
-!     ##inc-d 3
-!
-! Unitialized.factor will think 3 locations are unallocated, but they
-! are not.
 USING: accessors arrays byte-arrays classes compiler.cfg.dataflow-analysis
 compiler.cfg.instructions compiler.cfg.linearization
 compiler.cfg.registers formatting fry io io.streams.string kernel
@@ -82,17 +16,17 @@ QUALIFIED: sets
     [ first >= ] [ second in? ] 2bi or ;
 
 ! Logging
-: log-(transfer-set) ( in-set bb -- )
-    2drop ;
-: log-(join-sets) ( sets bb -- )
-    2drop ;
-
 ! : log-(transfer-set) ( in-set bb -- )
-!     [ ] [ block-number ] bi* swap
-!     "(transfer-set): #%s %u\n" printf ;
-
+!     2drop ;
 ! : log-(join-sets) ( sets bb -- )
-!     block-number swap "(join-sets): #%s %u\n" printf ;
+!     2drop ;
+
+: log-(transfer-set) ( in-set bb -- )
+    [ ] [ block-number ] bi* swap
+    "(transfer-set): #%s %u\n" printf ;
+
+: log-(join-sets) ( sets bb -- )
+    block-number swap "(join-sets): #%s %u\n" printf ;
 
 : state>uninitialized ( state -- seq )
     first2 [ 0 max iota ] dip diff ;
@@ -106,7 +40,7 @@ QUALIFIED: sets
 : log-gc-map-insn ( state insn -- )
     [ class-of ] [ gc-map>> scrub-d>> ] bi rot
     state>uninitialized uninitialized>bitmap
-    "%u: expected %u has %u\n" printf ;
+    2dup = not [ "%u: expected %u has %u\n" printf ] [ 3drop ] if ;
 
 ! visit-insn
 GENERIC: visit-insn ( state insn -- state' )

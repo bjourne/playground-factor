@@ -1,51 +1,8 @@
-USING: accessors arrays assocs combinators.short-circuit compiler compiler.cfg
-compiler.cfg.dataflow-analysis.private compiler.cfg.debugger
-compiler.cfg.instructions compiler.cfg.linearization compiler.cfg.registers
-examples.compiler.dummy-walker continuations formatting generic kernel macros
-math sequences sorting stack-checker.errors tools.test vectors vocabs words ;
+USING: accessors arrays assocs compiler.cfg
+compiler.cfg.dataflow-analysis.private compiler.cfg.instructions
+compiler.cfg.registers examples.compiler.dummy-walker kernel math sequences
+sorting tools.test vectors ;
 IN: examples.compiler.dummy-walker.tests
-
-: log-analyze-word ( word -- )
-    "analyze-word: %u\n" printf ;
-
-! : log-analyze-word ( word -- )
-!     drop ;
-
-: analyze-word ( word -- )
-    dup log-analyze-word
-    test-regs first dup linearization-order number-blocks
-    compute-dummy-walker-sets ;
-
-: word>blocks ( word -- bbs )
-    test-regs first linearization-order ;
-
-: word-size ( word -- size )
-    word>blocks length ;
-
-: regular-word? ( word -- ? )
-    { generic? inline? macro? no-compile? primitive? }
-    [ execute( x -- x ) ] with any? not ;
-
-! Linux: load-all words up to 60 are ok.
-: short-word? ( word -- ? )
-    [ word-size 15 < ] [
-        nip dup do-not-compile? [ drop f ] [ throw ] if
-    ] recover ;
-
-: testing-words ( -- words )
-    all-words [ regular-word? ] filter [ short-word? ] filter ;
-
-: failing-words ( words -- words' )
-    [ [ analyze-word f ] [ 2drop t ] recover ] filter ;
-
-: scrub-d-insn? ( insn -- ? )
-    { [ gc-map-insn? ] [ gc-map>> scrub-d>> length 2 >= ] } 1&& ;
-
-: has-gc-map? ( insns -- ? )
-    [ scrub-d-insn? ] any? ;
-
-: word-has-gc-map? ( word -- ? )
-    word>blocks [ instructions>> ] map concat has-gc-map? ;
 
 ! Utils
 : create-block ( insns n -- bb )

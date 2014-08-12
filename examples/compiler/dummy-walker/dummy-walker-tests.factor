@@ -25,7 +25,22 @@ IN: examples.compiler.dummy-walker.tests
 : make-edges ( block-map edgelist -- )
     [ [ of ] with map first2 connect-bbs ] with each ;
 
-! Uninitialized peek
+! Initially both the d and r stacks are empty.
+{
+    { { 0 { } } { 0 { } } }
+} [ V{ } create-cfg output-stack-map ] unit-test
+
+! Raise d stack.
+{
+    { { 1 { } } { 0 { } } }
+} [ V{ T{ ##inc-d f 1 } } create-cfg output-stack-map ] unit-test
+
+! Raise r stack.
+{
+    { { 0 { } } { 1 { } } }
+} [ V{ T{ ##inc-r f 1 } } create-cfg output-stack-map ] unit-test
+
+! Uninitialized peeks
 [
     V{
         T{ ##inc-d f 1 }
@@ -33,6 +48,15 @@ IN: examples.compiler.dummy-walker.tests
     } create-cfg
     compute-dummy-walker-sets
 ] [ vacant-peek? ] must-fail-with
+
+[
+    V{
+        T{ ##inc-r f 1 }
+        T{ ##peek { dst 0 } { loc R 0 } }
+    } create-cfg
+    compute-dummy-walker-sets
+] [ vacant-peek? ] must-fail-with
+
 
 ! Here the peek refers to a parameter of the word.
 [ ] [
@@ -68,7 +92,7 @@ IN: examples.compiler.dummy-walker.tests
         T{ ##alien-invoke { gc-map T{ gc-map { scrub-d B{ } } } } }
         T{ ##inc-d f -1 }
         T{ ##peek { dst 0 } { loc D -1 } }
-    } create-cfg output-stack-map
+    } create-cfg output-stack-map first
 ] unit-test
 
 ! Should not be ok because the value wasn't initialized when gc ran.
@@ -82,13 +106,13 @@ IN: examples.compiler.dummy-walker.tests
 ] [ vacant-peek? ] must-fail-with
 
 
-{ { 0 { } } } [
+{ { { 0 { } } { 0 { } } } } [
     V{ T{ ##safepoint } T{ ##prologue } T{ ##branch } }
     create-cfg output-stack-map
 ] unit-test
 
 {
-    { 0 { 0 1 2 } }
+    { { 0 { 0 1 2 } } { 0 { } } }
 } [
     V{
         T{ ##replace { src 10 } { loc D 0 } }
@@ -98,7 +122,7 @@ IN: examples.compiler.dummy-walker.tests
 ] unit-test
 
 {
-    { 1 { 1 0 } }
+    { { 1 { 1 0 } } { 0 { } } }
 } [
     V{
         T{ ##replace { src 10 } { loc D 0 } }
@@ -115,7 +139,7 @@ IN: examples.compiler.dummy-walker.tests
         T{ ##inc-d f 1 }
         T{ ##replace { src 10 } { loc D 0 } }
         T{ ##inc-d f -1 }
-    } create-cfg output-stack-map
+    } create-cfg output-stack-map first
 ] unit-test
 
 { { 0 { -1 } } }
@@ -124,7 +148,7 @@ IN: examples.compiler.dummy-walker.tests
         T{ ##inc-d f 1 }
         T{ ##replace { src 10 } { loc D 0 } }
         T{ ##inc-d f -1 }
-    } create-cfg output-stack-map
+    } create-cfg output-stack-map first
 ] unit-test
 
 : cfg1 ( -- cfg )
@@ -138,7 +162,7 @@ IN: examples.compiler.dummy-walker.tests
     } 1 create-block
     1vector >>successors block>cfg ;
 
-{ { 0 { -1 } } } [ cfg1 output-stack-map ] unit-test
+{ { 0 { -1 } } } [ cfg1 output-stack-map first ] unit-test
 
 ! Same cfg structure as the bug1021:run-test word but with
 ! non-datastack instructions mostly omitted.
@@ -189,4 +213,4 @@ IN: examples.compiler.dummy-walker.tests
     } [ over create-block ] assoc-map dup
     { { 0 1 } { 1 2 } { 2 3 } { 3 8 } { 8 10 } } make-edges 0 of block>cfg ;
 
-{ { 4 { 3 2 1 0 } } } [ bug1021-cfg output-stack-map ] unit-test
+{ { 4 { 3 2 1 0 } } } [ bug1021-cfg output-stack-map first ] unit-test

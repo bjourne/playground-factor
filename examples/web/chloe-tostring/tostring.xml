@@ -1,0 +1,8 @@
+<?xml version='1.0' ?>
+<t:chloe xmlns:t="http://factorcode.org/chloe/1.0">
+  <h1>Batch rendered Chloe-template</h1>
+  <dl>
+    <dt>Name</dt><dd><t:label t:name="name"/></dd>
+    <dt>Age</dt><dd><t:label t:name="age"/></dd>
+  </dl>
+</t:chloe>

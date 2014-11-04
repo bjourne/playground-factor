@@ -1,0 +1,5 @@
+<?xml version='1.0' ?>
+<t:chloe xmlns:t="http://factorcode.org/chloe/1.0">
+  <h1>This is a header</h1>
+  <t:textarea t:name="content" t:rows="30" t:cols="80" />
+</t:chloe>

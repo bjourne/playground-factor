@@ -1,3 +1,16 @@
+! To use this script, you need the following:
+!
+!  * A directory containing:
+!    * a template.html file
+!    * a posts/ directory with all your markdown blog posts
+!    * a chrome/ directory containing stylesheets and images
+!  * The github version of python-markdown installed
+!
+! If you have all that, then you can run this script:
+!
+!   "path/to/dir" generate-blog
+!
+! and hope for the best. :)
 USING: accessors assocs arrays combinators continuations
 formatting fry html.templates html.templates.fhtml io io.directories
 io.directories.hierarchy io.encodings.utf8 io.files io.launcher io.pathnames
@@ -36,7 +49,7 @@ CONSTANT: scp-path "bjourne@31.192.226.186:/opt/sites/bjornlindqvist.se/www/blog
 ! Making blog posts
 TUPLE: post title date tags html slug ;
 
-CONSTANT: markdown-cmd "python -m markdown -x codehilite -x meta %s"
+CONSTANT: markdown-cmd "python -m markdown -x markdown.extensions.codehilite -x meta %s"
 
 : markdown-render ( file -- str )
     markdown-cmd sprintf utf8 read-process-contents ;
@@ -67,7 +80,7 @@ CONSTANT: markdown-cmd "python -m markdown -x codehilite -x meta %s"
     "ul" { { "class" "square" } } tag-wrap2 ;
 
 : post-header ( post -- header )
-    [ post>a "h1" tag-wrap ]
+    [ post>a "h2" tag-wrap ]
     [
         get[ date tags ] " " join 2array { "Posted:" "Tags:" }
         [ [ "dd" tag-wrap ] [ "dt" tag-wrap ] bi* prepend ] 2map

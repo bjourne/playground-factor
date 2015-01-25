@@ -13,17 +13,17 @@ IN: lpath
     parse-graph reshape-graph ;
 
 : initial-visited ( G -- array )
-    length [ 0 ] { } replicate-as ;
+    length 0 <array> ;
 
 ! Helps Factor generate unsafe assembly.
 : fast-add ( fix1 fix2 -- fix3 )
     { fixnum fixnum } declare fixnum+fast ; inline
 
 : fast-array-nth ( arr fix -- el )
-    { array fixnum } declare 2 fast-add slot ; inline
+    { array fixnum } declare swap nth-unsafe ; inline
 
 : fast-first2 ( arr -- el1 el2 )
-    { array } declare dup 2 slot swap 3 slot ; inline
+    { array } declare first2-unsafe ; inline
 
 DEFER: (longest-path)
 

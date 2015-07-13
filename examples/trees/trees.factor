@@ -1,4 +1,7 @@
-USING: fry io kernel namespaces math prettyprint sequences strings ;
+! You can use these words on almost anything tree-like. As long as you
+! provide node-children and set-node-children.
+USING: accessors byte-arrays fry generic io kernel math namespaces
+prettyprint sequences strings words ;
 IN: examples.trees
 
 GENERIC: node-children ( node -- nodes )
@@ -31,5 +34,17 @@ M: object set-node-children ( node nodes -- node' )
 M: sequence set-node-children ( node nodes -- node' )
     nip ;
 
+
 M: object node-children drop f ;
 M: sequence node-children ;
+
+! Strings and byte array children are uninteresting.
+M: string node-children drop f ;
+M: byte-array node-children drop f ;
+M: word node-children def>> ;
+
+! generics have to many children
+M: generic node-children drop f ;
+
+: try-this ( -- )
+    \ filter-as tree-printer ;

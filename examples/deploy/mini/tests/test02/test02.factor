@@ -5,7 +5,7 @@ IN: examples.deploy.mini.tests.test02
 ! 64-bit size: 3 024
 
 : features ( -- assoc )
-    H{ { quotation-compiler? f } } ;
+    { { quotation-compiler? f } } ;
 
 ! We are lucky that the generics are inlined.
 : main-word ( -- )

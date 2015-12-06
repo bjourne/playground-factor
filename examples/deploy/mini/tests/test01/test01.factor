@@ -7,7 +7,11 @@ IN: examples.deploy.mini.tests.test01
 ! 64-bit size: 1 888
 
 : features ( -- assoc )
-    H{ { quotation-compiler? f } } ;
+    {
+        { quotation-compiler? f }
+        { required-classes { } }
+        { global-hash? f }
+    } ;
 
 : main-word ( -- ) 99 (exit) ;
 

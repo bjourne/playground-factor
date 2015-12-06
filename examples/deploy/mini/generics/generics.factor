@@ -1,13 +1,11 @@
-USING: arrays assocs compiler.units definitions fry hashtables kernel sequences slots.private words ;
+USING: arrays assocs classes.tuple.private compiler.units
+compiler.units.private definitions examples.deploy.mini.utils fry
+generic kernel memory namespaces sequences strings vectors vocabs
+words ;
 IN: examples.deploy.mini.generics
 
-! We cant use any generic methods here
-: hashtable$at ( key assoc -- value/f )
-    M\ hashtable at* execute( k h -- v/f ? ) drop ;
 
-: word$word-prop ( word name -- value )
-    swap 5 slot hashtable$at ;
-
+! ! Strip default method
 : walk-decision-tree-rec ( seq quot: ( method -- method' ) -- seq' )
     dup '[
         dup array? [ _ walk-decision-tree-rec ] [
@@ -17,28 +15,73 @@ IN: examples.deploy.mini.generics
 
 : walk-decision-tree ( word quot: ( method -- method' ) -- )
     [
-        "decision-tree" word$word-prop
+        "decision-tree" word-prop
     ] dip walk-decision-tree-rec drop ; inline
 
-: filter-by-classes-quot ( classes -- quot: ( method -- method' ) )
-    '[
-        dup "method-class" word$word-prop _ member? [ drop f ] unless
-    ] ; inline
-
 : reject-default-method-quot ( word -- quot: ( method -- method' ) )
-    "default-method" word$word-prop '[ _ dupd = [ drop f ] when ] ; inline
-
-! The decision tree array is directly referred from assembly code.
-: prune-decision-tree ( word classes -- )
-    filter-by-classes-quot walk-decision-tree ;
+    "default-method" word-prop '[ _ dupd = [ drop f ] when ] ; inline
 
 : prune-default-method ( word -- )
     dup reject-default-method-quot walk-decision-tree ;
 
-: forget-other-methods ( generic classes -- )
-    [
-        [ "methods" word-prop ] [ '[ drop _ member? ] ] bi*
-        assoc-reject values [ forget ] each
-        ! "methods" word-prop { byte-array } '[ drop _ member? ] assoc-reject
-        ! values [ forget ] each
-    ] with-compilation-unit ;
+
+! tough oness: string, vector
+
+
+! These are the classes that are required to finish deploying the
+! image.
+: base-classes ( -- seq )
+    {
+        array
+        ! bignum
+        ! byte-array
+        ! callable
+
+        ! compose
+        ! curry
+
+        ! fixnum
+
+        ! hashtable
+        ! object
+        ! quotation
+        ! sequence
+        string
+        ! tuple
+        vector
+        ! word
+        ! wrapper
+    } ;
+
+: forgettable-generics ( -- seq )
+    [ generic? ] instances ;
+
+: forget-generic ( required-classes generic -- )
+    dup prune-default-method
+    "methods" word-prop values
+    [ "method-class" word-prop swap member? not ] with filter
+    [ forget ] each ;
+
+: forget-other-methods ( required-classes -- )
+    V{ } clone definition-observers set-global
+    V{ } clone vocab-observers set-global
+    <definitions> new-definitions set
+    <definitions> old-definitions set
+    HS{ } clone forgotten-definitions set
+    HS{ } clone changed-definitions set
+    HS{ } clone maybe-changed set
+    HS{ } clone changed-effects set
+    HS{ } clone outdated-generics set
+    H{ } clone outdated-tuples set
+    HS{ } clone new-words set
+
+    base-classes append
+    dup "Preserving classes: %u" printff
+    [ generic? ] instances [ forget-generic ] with each
+
+    remake-generics
+    to-recompile [
+        recompile
+        update-tuples
+        process-forgotten-definitions
+    ] keep update-existing? reset-pics? modify-code-heap ;

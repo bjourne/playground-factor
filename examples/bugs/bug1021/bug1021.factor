@@ -8,7 +8,7 @@ find-library absolute-path cdecl add-library >>
 
 LIBRARY: factor-ffi-test
 
-FUNCTION: void* bug1021_test_1 ( void* s, int x ) ;
+FUNCTION: void* bug1021_test_1 ( void* s, int x )
 
 : dummy ( -- ) ;
 
@@ -36,8 +36,8 @@ FUNCTION: void* bug1021_test_1 ( void* s, int x ) ;
 
 ! This example doesn't fail unless you apply my pr which empties the
 ! nursery because of shadow data.
-FUNCTION: int bug1021_test_2 ( int a, char* b, void* c ) ;
-FUNCTION: void* bug1021_test_3 ( c-string a ) ;
+FUNCTION: int bug1021_test_2 ( int a, char* b, void* c )
+FUNCTION: void* bug1021_test_3 ( c-string a )
 USING: byte-arrays alien.strings ;
 
 : doit ( a -- d )

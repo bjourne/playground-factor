@@ -1,15 +1,9 @@
 USING: arrays assocs fry kernel locals math sequences splitting ;
 IN: examples.golf.challenge-252
 
-! Comes from yaml
-: assoc-map! ( assoc quot -- assoc' )
-    [ assoc-map ] [ drop clear-assoc ] [ drop swap assoc-union! ] 2tri ; inline
-
-: refine-index ( max-i index prev-index -- )
-    ! Replace with prev index values
-    '[ drop dup _ at ] assoc-map!
-    ! Then filter using max-i
-    swap '[ nip _ >= ] assoc-filter! drop ;
+:: refine-index ( max-i index prev-index -- )
+    index keys [ [ prev-index at ] [ index set-at ] bi ] each
+    index [ nip max-i >= ] assoc-filter! drop ;
 
 ! Pair is either passed through unchanged, or if we find a better
 ! match, it is narrowed.

@@ -1,10 +1,10 @@
 ! Copyright (C) 2015 Björn Lindqvist.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: assocs examples.deploy.mini.features
-examples.deploy.mini.generics examples.deploy.mini.utils io.backend
-io.pathnames kernel kernel.private literals locals memory
-memory.private namespaces parser quotations sequences slots.private
-vocabs vocabs.loader words ;
+USING: accessors examples.deploy.mini.features
+examples.deploy.mini.generics examples.deploy.mini.utils generic io.backend
+io.pathnames kernel kernel.private literals locals memory memory.private
+namespaces parser quotations sequences slots.private vocabs vocabs.loader
+words ;
 IN: examples.deploy.mini
 
 : strip-word ( id-quot word -- )
@@ -45,23 +45,27 @@ IN: examples.deploy.mini
         [ 9 slot ] dip special-object 9 set-slot
     ] with each ;
 
-: simplify-generics ( required-classes -- )
+: simplify-generics ( required-classes affected-generics -- )
     "Simplifying generics" safe-show
     forget-other-methods ;
 
 : cleanup-globals ( -- )
-    "Cleaning globals" safe-show
-    OBJ-GLOBAL special-object 2 slot safe-clear-hash ;
+    "Cleaning globals" safe-show ;
 
 :: word>factor-image ( image-path word features -- )
 
     image-path normalize-path saving-path :> ( saving-path real-path )
 
-    features required-classes safe-of simplify-generics
+    features required-classes safe-of
+    [ generic? ] instances simplify-generics
 
     ! After generic stripping we have to be *very* careful because a
     ! lot of words won't work.
     strip-all-words
+
+    features global-hash? safe-of [ cleanup-globals ] [
+        f OBJ-GLOBAL set-special-object
+    ] if
 
     word clean-special-words
 
@@ -69,9 +73,14 @@ IN: examples.deploy.mini
     f OBJ-STARTUP-QUOT set-special-object
     f OBJ-SHUTDOWN-QUOT set-special-object
 
-    features global-hash? safe-of [ cleanup-globals ] [
-        f OBJ-GLOBAL set-special-object
-    ] if
+    ! Canonicals
+    f OBJ-BIGNUM-ZERO set-special-object
+    f OBJ-BIGNUM-POS-ONE set-special-object
+    f OBJ-BIGNUM-NEG-ONE set-special-object
+    f OBJ-CANONICAL-TRUE set-special-object
+
+    ! It's fine as long as the value is != f
+    20 OBJ-STAGE2 set-special-object
 
     ! Entry points and signal handlers we can do without
     LAZY-JIT-COMPILE-WORD REDEFINITION-COUNTER clear-specials

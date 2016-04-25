@@ -1,10 +1,10 @@
-USING: examples.deploy.mini.features system ;
+USING: examples.deploy.mini.features kernel system ;
 IN: examples.deploy.mini.tests.test01
 
 ! Words      : (exit) main-word t c-to-factor
 ! Quotations : [ ]
-! Code blocks: (exit) main-word/c-to-factor t [ ]
-! 64-bit size: 1 888
+! Code blocks: (exit) main-word/c-to-factor [ ]
+! 64-bit size: 1 496
 
 : features ( -- assoc )
     {

@@ -57,6 +57,7 @@ QUALIFIED: sets
     dup [ "mixin" word-prop ] filter [ filter-mixin ] with each ;
 
 : forget-other-methods ( generics classes -- )
+    "Recompiling generics..." safe-show
     [
         dup filter-mixins
         filter-generics

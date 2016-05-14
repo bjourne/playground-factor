@@ -6,22 +6,17 @@ sequences.private system ;
 IN: examples.deploy.mini.tests.test06
 
 ! Purpose    : Global variables
-! 64-bit size: 25 248
-: features ( -- assoc )
-    {
-        { quotation-compiler? t }
-        { required-classes {
-            bignum byte-array
-            compose curry
-            copy-state fixnum
-            global-hashtable global-box
-            hashtable
-            object
-            quotation
-            sequence tuple
-        } }
-        { global-hash? t }
-    } ;
+! 64-bit size: 72 408
+CONSTANT: features {
+    { quotation-compiler? t }
+    { required-classes {
+        fixnum
+        global-hashtable global-box
+        hashtable
+        object
+    } }
+    { global-hash? t }
+}
 
 : do-it ( -- )
     33 44 set-global ;

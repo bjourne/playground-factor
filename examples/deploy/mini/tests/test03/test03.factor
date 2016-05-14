@@ -3,12 +3,12 @@ IN: examples.deploy.mini.tests.test03
 
 ! 64-bit size: 14 280 (15 240)
 ! Purpose    : Requiring the quotation compiler for generics
-: features ( -- assoc )
+CONSTANT: features
     {
         { quotation-compiler? t }
         { required-classes { fixnum } }
-        { word-names? t }
-    } ;
+        { word-names? f }
+    }
 
 GENERIC: b-length ( obj -- n )
 

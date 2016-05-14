@@ -5,13 +5,11 @@ IN: examples.deploy.mini.tests.test01
 ! Quotations : [ ]
 ! Code blocks: (exit) main-word/c-to-factor [ ]
 ! 64-bit size: 1 496
-
-: features ( -- assoc )
-    {
-        { quotation-compiler? f }
-        { required-classes { } }
-        { global-hash? f }
-    } ;
+CONSTANT: features {
+    { quotation-compiler? f }
+    { required-classes { } }
+    { global-hash? f }
+}
 
 : main-word ( -- ) 99 (exit) ;
 

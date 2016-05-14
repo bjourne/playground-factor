@@ -1,11 +1,10 @@
 ! Copyright (C) 2015 Björn Lindqvist.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: arrays byte-arrays examples.deploy.mini.features
-examples.deploy.mini.generics examples.deploy.mini.utils
-examples.deploy.mini.word-stripping generic growable io.backend
-io.pathnames kernel kernel.private literals locals memory
-memory.private namespaces parser sequences slots.private strings
-vectors vocabs vocabs.loader words ;
+USING: arrays examples.deploy.mini.features examples.deploy.mini.generics
+examples.deploy.mini.globals examples.deploy.mini.utils
+examples.deploy.mini.word-stripping generic io.backend io.pathnames kernel
+kernel.private literals locals memory memory.private namespaces parser
+sequences slots.private strings vectors vocabs vocabs.loader words ;
 IN: examples.deploy.mini
 
 : strip-jit-compiler ( -- )
@@ -37,30 +36,26 @@ CONSTANT: base-classes {
     array string vector
 }
 
-: recompile-generics ( generics classes -- )
-    "Recompiling generics..." safe-show
-    forget-other-methods ;
-
-: cleanup-globals ( -- )
-    "Cleaning globals..." safe-show ;
-
 :: word>factor-image ( image-path word features -- )
+    "Baking the image..." safe-show
 
     image-path normalize-path saving-path :> ( saving-path real-path )
 
-    [ generic? ] instances
-    features required-classes safe-of base-classes append
-    recompile-generics
+    features global-hash? safe-of [
+        uninline-globals-word
+        features required-vars safe-of copy-global-vars
+    ] [ f ] if :> new-globals
 
     ! After generic stripping we have to be *very* careful because a
     ! lot of words won't work.
+    [ generic? ] instances
+    features required-classes safe-of base-classes append
+    forget-other-methods
+
+    new-globals OBJ-GLOBAL set-special-object
+
     "Stripping words..." safe-show
     features word-names? safe-of strip-words
-
-    "Cleaning globals..." safe-show
-    features global-hash? safe-of [ cleanup-globals ] [
-        f OBJ-GLOBAL set-special-object
-    ] if
 
     word clean-special-words
 
@@ -92,11 +87,14 @@ CONSTANT: base-classes {
     [ load-vocab vocab-main dup "loc" word-prop first run-file ]
     [ "features" swap lookup-word execute( -- assoc ) ] bi ;
 
+: vocab-and-output ( -- vocab output )
+    "deploy-vocab" get "output-image" get [ dup ".image" append ] unless* ;
+
 : main ( -- )
     current-directory get vocab-roots get push
-    "output-image" get
-    "deploy-vocab" get
-    2dup swap "Deploying %u to %u..." printff
-    vocab-main-and-features word>factor-image ;
+
+    vocab-and-output
+    2dup "Deploying %u to %u..." printff
+    swap vocab-main-and-features word>factor-image ;
 
 MAIN: main

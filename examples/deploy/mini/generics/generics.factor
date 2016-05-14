@@ -1,45 +1,19 @@
-USING: arrays assocs classes.tuple.private compiler.units
+USING: arrays assocs classes.mixin classes.tuple.private compiler.units
 compiler.units.private definitions examples.deploy.mini.utils fry
 generic kernel memory namespaces sequences strings vectors vocabs
 words ;
 IN: examples.deploy.mini.generics
+QUALIFIED: sets
 
-: walk-decision-tree-rec ( seq quot: ( method -- method' ) -- seq' )
-    dup '[
-        dup array? [ _ walk-decision-tree-rec ] [
-            dup [ @ ] when
-        ] if
-    ] map! ; inline recursive
-
-: walk-decision-tree ( word quot: ( method -- method' ) -- )
-    [
-        "decision-tree" word-prop
-    ] dip walk-decision-tree-rec drop ; inline
-
-: reject-default-method-quot ( word -- quot: ( method -- method' ) )
-    "default-method" word-prop '[ _ dupd = [ drop f ] when ] ; inline
-
-: prune-default-method ( word -- )
-    dup reject-default-method-quot walk-decision-tree ;
-
-
-! tough oness: string, vector
-
-! These are the classes that are required to finish deploying the
-! image.
-: base-classes ( -- seq )
-    { array string vector } ;
-
-: forgettable-generics ( -- seq )
-    [ generic? ] instances ;
-
-: forget-generic ( required-classes generic -- )
-    dup prune-default-method
-    "methods" word-prop values
-    [ "method-class" word-prop swap member? not ] with filter
+: filter-generic ( generic classes -- )
+    [ "methods" word-prop values ] dip
+    '[ "method-class" word-prop _ member? ] reject
     [ forget ] each ;
 
-: set-compile-vars ( -- )
+: filter-generics ( generics classes -- )
+    '[ _ filter-generic ] each ;
+
+: begin-simple-compilation-unit ( -- )
     V{ } clone definition-observers set-global
     V{ } clone vocab-observers set-global
     <definitions> new-definitions set
@@ -49,20 +23,41 @@ IN: examples.deploy.mini.generics
     HS{ } clone maybe-changed set
     HS{ } clone changed-effects set
     HS{ } clone outdated-generics set
-    H{ } clone outdated-tuples set
-    HS{ } clone new-words set ;
+    HS{ } clone new-words set
+    H{ } clone outdated-tuples set ;
 
-: do-generic-recompile ( -- )
-    "Remaking generics..." printff
+: finish-simple-compilation-unit ( -- )
+    "Remaking generics..." safe-show
     remake-generics
     to-recompile [
+        dup length "Recompiling %d words..." printff
         recompile
         outdated-tuples get update-tuples
         forgotten-definitions get process-forgotten-definitions
-    ] keep update-existing? reset-pics? modify-code-heap ;
+    ] keep update-existing? reset-pics?
+    "Modifying code heap..." safe-show
+    modify-code-heap ;
 
-: forget-other-methods ( required-classes affected-generics -- )
-    set-compile-vars
-    [ base-classes append ] dip
-    [ forget-generic ] with each
-    do-generic-recompile ;
+: with-simple-compilation-unit ( quot -- )
+    begin-simple-compilation-unit
+    call finish-simple-compilation-unit ; inline
+
+: instances-to-remove ( classes mixin -- instances )
+    "instances" word-prop keys swap sets:diff ;
+
+: filter-mixin ( classes mixin -- )
+    [
+        instances-to-remove
+        dup "Removing instances %u\n" printff
+    ] keep
+    '[ _ remove-mixin-instance ] each ;
+    ! 2drop ;
+
+: filter-mixins ( classes -- )
+    dup [ "mixin" word-prop ] filter [ filter-mixin ] with each ;
+
+: forget-other-methods ( generics classes -- )
+    [
+        dup filter-mixins
+        filter-generics
+    ] with-simple-compilation-unit ;

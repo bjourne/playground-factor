@@ -1,29 +1,15 @@
 ! Copyright (C) 2015 Björn Lindqvist.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors examples.deploy.mini.features
-examples.deploy.mini.generics examples.deploy.mini.utils generic io.backend
-io.pathnames kernel kernel.private literals locals memory memory.private
-namespaces parser quotations sequences slots.private vocabs vocabs.loader
-words ;
+USING: arrays byte-arrays examples.deploy.mini.features
+examples.deploy.mini.generics examples.deploy.mini.utils
+examples.deploy.mini.word-stripping generic growable io.backend
+io.pathnames kernel kernel.private literals locals memory
+memory.private namespaces parser sequences slots.private strings
+vectors vocabs vocabs.loader words ;
 IN: examples.deploy.mini
 
-: strip-word ( id-quot word -- )
-    dup clear-word-props
-    dup word-pic-def [ jit-compile ] when*
-    dup word-pic-tail-def [ jit-compile ] when*
-    word-set-def ;
-
-: strip-all-words ( -- )
-    "Setting slot..." safe-show
-    [ ] dup jit-compile dup f swap 1 set-slot
-
-    "Stripping words.." safe-show
-    all-instances [
-        dup word? [ strip-word ] [ 2drop ] if
-    ] with each ;
-
 : strip-jit-compiler ( -- )
-    "Stripping JIT compiler" safe-show
+    "Stripping JIT compiler..." safe-show
 
     ! JIT removal, must be done almost last.
     JIT-PROLOG JIT-DECLARE-WORD clear-specials
@@ -32,7 +18,7 @@ IN: examples.deploy.mini
     PIC-LOAD OBJ-STDERR clear-specials ;
 
 : clean-special-words ( redir-word -- )
-    "Setting images main word" safe-show
+    "Setting images main word..." safe-show
     ! Primitive words that are required for generics, but whose code
     ! blocks we can overwrite.
     ${
@@ -45,24 +31,33 @@ IN: examples.deploy.mini
         [ 9 slot ] dip special-object 9 set-slot
     ] with each ;
 
-: simplify-generics ( required-classes affected-generics -- )
-    "Simplifying generics" safe-show
+! These are the classes that are required to finish deploying the
+! image.
+CONSTANT: base-classes {
+    array string vector
+}
+
+: recompile-generics ( generics classes -- )
+    "Recompiling generics..." safe-show
     forget-other-methods ;
 
 : cleanup-globals ( -- )
-    "Cleaning globals" safe-show ;
+    "Cleaning globals..." safe-show ;
 
 :: word>factor-image ( image-path word features -- )
 
     image-path normalize-path saving-path :> ( saving-path real-path )
 
-    features required-classes safe-of
-    [ generic? ] instances simplify-generics
+    [ generic? ] instances
+    features required-classes safe-of base-classes append
+    recompile-generics
 
     ! After generic stripping we have to be *very* careful because a
     ! lot of words won't work.
-    strip-all-words
+    "Stripping words..." safe-show
+    features word-names? safe-of strip-words
 
+    "Cleaning globals..." safe-show
     features global-hash? safe-of [ cleanup-globals ] [
         f OBJ-GLOBAL set-special-object
     ] if
@@ -87,7 +82,6 @@ IN: examples.deploy.mini
 
     f OBJ-UNDEFINED set-special-object
 
-    "Checking if stripping JIT" safe-show
     features quotation-compiler? safe-of [
         strip-jit-compiler
     ] unless
@@ -104,6 +98,5 @@ IN: examples.deploy.mini
     "deploy-vocab" get
     2dup swap "Deploying %u to %u..." printff
     vocab-main-and-features word>factor-image ;
-
 
 MAIN: main

@@ -1,5 +1,5 @@
 USING: byte-arrays examples.deploy.mini.features io.streams.c kernel
-sequences ;
+math sequences sequences.private ;
 IN: examples.deploy.mini.tests.test02
 
 ! 64-bit size: 2 616
@@ -7,8 +7,11 @@ IN: examples.deploy.mini.tests.test02
 : features ( -- assoc )
     {
         { global-hash? f }
-        { required-classes { } }
+        { required-classes {
+            bignum byte-array copy-state fixnum object sequence tuple
+        } }
         { quotation-compiler? f }
+        { word-names? t }
     } ;
 
 ! We are lucky that the generics are inlined.

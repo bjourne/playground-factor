@@ -5,13 +5,14 @@ math sequences sequences.private ;
 IN: examples.deploy.mini.tests.test05
 
 ! Purpose    : Using io.streams.c:show
-! 64-bit size: 97 616-
+! 64-bit size: 70 088
 : features ( -- assoc )
     {
         { quotation-compiler? t }
         { required-classes {
             bignum byte-array copy-state fixnum object sequence tuple
         } }
+        { word-names? f }
     } ;
 
 : main-word ( -- )

@@ -49,20 +49,3 @@ MACRO: safe-show ( msg -- quot )
         swap dup f swap set-special-object
         safe++ swap clear-specials
     ] if ;
-
-: clear-word-props ( word -- )
-    f swap 5 set-slot ;
-
-: word-pic-def ( word -- pic-def )
-    6 slot ;
-
-: word-pic-tail-def ( word -- pic-tail-def )
-    7 slot ;
-
-: word-set-def ( value word -- )
-    4 set-slot ;
-
-: safe-clear-hash ( hash -- )
-    dup 0 swap 2 set-slot
-    dup 0 swap 3 set-slot
-    4 slot [ drop ((empty)) ] map! drop ;

@@ -8,11 +8,11 @@ LIBRARY: libc
 FUNCTION: void qsort ( void* base,
                        size_t num,
                        size_t width,
-                       void* func ) ;
+                       void* func )
 
 SPECIALIZED-ARRAY: uint
 
-CALLBACK: int comparer ( void* arg1, void* arg2 ) ;
+CALLBACK: int comparer ( void* arg1, void* arg2 )
 
 : <comparer> ( -- alien )
     [

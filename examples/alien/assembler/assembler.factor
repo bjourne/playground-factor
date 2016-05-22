@@ -9,11 +9,11 @@ LIBRARY: libc
 FUNCTION: void qsort ( void* base,
                        size_t num,
                        size_t width,
-                       void* func ) ;
+                       void* func )
 
 SPECIALIZED-ARRAY: uint
 
-CALLBACK: int comparer ( void* arg1, void* arg2 ) ;
+CALLBACK: int comparer ( void* arg1, void* arg2 )
 
 : assembly-compare ( uint1* uint2* -- -1/0/1 )
     init-relocation

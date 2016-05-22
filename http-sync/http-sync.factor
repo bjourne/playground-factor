@@ -15,7 +15,7 @@ fetch-cache [ H{ } clone ] initialize
 
 TUPLE: item url poll-duration cb-quot children ;
 
-CONSTRUCTOR: item ( url poll-duration cb-quot -- item ) ;
+CONSTRUCTOR: <item> item ( url poll-duration cb-quot -- item ) ;
 
 M: item present
     [ url>> ]

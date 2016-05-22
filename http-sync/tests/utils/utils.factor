@@ -23,11 +23,6 @@ IN: http-sync.tests.utils
         [ [ unclip-last first2 ] dip suffix 2array suffix ] if
     ] { } swap reduce ; inline
 
-: interpolate-string ( assoc str -- str' )
-    parse-interpolate [
-        dup interpolate-var? [ name>> of present ] [ nip ] if
-    ] with map "" join ;
-
 : find-between-has-class ( vector class -- vector' )
     '[ "class" attribute dup "" ? " " split _ swap member? ]
     find-between-all ;

@@ -7,7 +7,7 @@ sequences.private vectors ;
 IN: examples.deploy.mini.tests.test07
 
 ! Purpose    : Reading special objects
-! 64-bit size: 124 536 (136 376)
+! 64-bit size: 124 536 (135 656)
 CONSTANT: features {
     { quotation-compiler? t }
     { required-classes {
@@ -18,7 +18,6 @@ CONSTANT: features {
         growable
         memory-stream
         object
-        quotation
         sequence
         sbuf
         tuple

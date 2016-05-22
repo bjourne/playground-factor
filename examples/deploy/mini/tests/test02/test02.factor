@@ -10,7 +10,7 @@ CONSTANT: features {
         bignum byte-array copy-state fixnum object sequence tuple
     } }
     { quotation-compiler? f }
-    { word-names? f }
+    { word-names? t }
 }
 
 ! We are lucky that the generics are inlined.

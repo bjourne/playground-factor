@@ -1,16 +1,6 @@
-USING: cairo cairo.ffi combinators images.loader io.files.temp ;
+USING: accessors cairo cairo.ffi combinators images images.loader
+io.files.temp kernel sequences ;
 IN: examples.images.drawing
-
-! : test-image ( -- image )
-!     "C:/Users/bjli.BRUGGEMANN/Desktop/adbilder/norm/about.png" load-image ;
-
-: image>cairo-surface ( image -- surface )
-    {
-        [ bitmap>> ]
-        [ drop CAIRO_FORMAT_ARGB32 ]
-        [ dim>> first2 ]
-        [ rowstride ]
-    } cleave cairo_image_surface_create_for_data ;
 
 : draw-stuff ( cr -- )
     {

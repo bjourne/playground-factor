@@ -5,7 +5,7 @@ IN: examples.bugs.bug839
     [ 42 < ] all? ;
 
 : foo2 ( seq -- ? )
-    [ 42 < ] (each) all-integers? ;
+    [ 42 < ] setup-each all-integers? ;
 
 : foo3 ( seq -- ? )
     dup length swap [ nth-unsafe 42 < ] curry all-integers? ;

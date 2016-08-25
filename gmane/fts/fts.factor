@@ -16,7 +16,7 @@ USING:
     splitting
     strings
     tools.time
-    unicode.case unicode.categories ;
+    unicode ;
 IN: gmane.fts
 
 TUPLE: word id str ;

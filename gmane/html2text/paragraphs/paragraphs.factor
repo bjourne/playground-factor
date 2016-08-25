@@ -1,4 +1,4 @@
-USING: fry kernel sequences splitting unicode.categories wrap.strings ;
+USING: fry kernel sequences splitting unicode wrap.strings ;
 IN: gmane.html2text.paragraphs
 
 CONSTANT: line-width   78

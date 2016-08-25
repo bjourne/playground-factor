@@ -3,6 +3,6 @@ ui.gadgets.scrollers ;
 IN: examples.ui.editor
 
 : show-file ( file -- )
-    <multiline-editor> { 300 400 } >>pref-dim f >>editable?
+    <multiline-editor> { 300 400 } >>pref-dim
     over utf8 file-contents over set-editor-string <scroller>
     swap '[ _ _ open-window ] with-ui ;

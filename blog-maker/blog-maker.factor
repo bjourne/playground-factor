@@ -13,7 +13,7 @@
 ! and hope for the best. :)
 USING: accessors assocs arrays combinators continuations
 formatting fry html.templates html.templates.fhtml io io.directories
-io.directories.hierarchy io.encodings.utf8 io.files io.launcher io.pathnames
+io.encodings.utf8 io.files io.launcher io.pathnames
 io.streams.string kernel math math.statistics namespaces sequences
 sequences.generalizations slots.syntax sorting splitting ;
 IN: blog-maker
